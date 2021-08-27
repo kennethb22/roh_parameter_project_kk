@@ -22,7 +22,7 @@ initialize() {
 	writeFile(OUT_PATH + "ancestral.fasta", sequence, append=T);
 	sim.addSubpop("p1", POP_SIZE);
 }
-1000 late() {
+100000 late() {
 
 	// This line works by itself to output all individuals in the population
 	p1.genomes.outputVCF(OUT_PATH + "final_pop.vcf");

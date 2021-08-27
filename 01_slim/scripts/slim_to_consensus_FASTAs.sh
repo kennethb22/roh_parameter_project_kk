@@ -54,7 +54,7 @@ slim \
   -d MUTATION_RATE=100e-8 \
   -d REC_RATE=250e-8 \
   -d CHR_LENGTH=30000000 \
-  -d POP_SIZE=100 \
+  -d POP_SIZE=1000 \
   -d "OUT_PATH='/scratch/${USER}_${PROJ}/slim_output_files/'" \
   /home/$USER/roh_param_project/$PROJ/scripts/chrom_evo_and_sample.slim
 
