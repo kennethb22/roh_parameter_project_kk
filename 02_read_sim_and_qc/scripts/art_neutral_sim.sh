@@ -1,3 +1,8 @@
+## Script published alongside:
+## Lou RN, Jacobs A, Wilder A, Therkildsen NO. A beginner's 
+## guide to low-coverage whole genome sequencing for population genomics. 
+## Molecular Ecology. 2021 Jul. DOI: 10.1111/mec.16077.
+
 #!/bin/bash
 REP_ID=$1
 DIR=${2:-/workdir/lcwgs-simulation/neutral_sim/}
