@@ -38,31 +38,39 @@ cp /home/$USER/roh_param_project/$PROJ/input/* /scratch/${USER}_${PROJ}/
 ## cd into working scratch directory
 cd /scratch/${USER}_${PROJ}/
 
-## --------------------------------
-## Load modules
-module load bcftools/1.13
-module load anaconda
 
 ## --------------------------------
 ## Run SLiM
+module load anaconda
+
 mkdir slim_output_files
 
 currentDate=`date`
 echo $currentDate
 
+## models chromosomes without structure, all random distributions
+# slim \
+#   -d MUTATION_RATE=100e-9 \
+#   -d REC_RATE=250e-10 \
+#   -d CHR_LENGTH=30000000 \
+#   -d POP_SIZE=500 \
+#   -d "OUT_PATH='/scratch/${USER}_${PROJ}/slim_output_files/'" \
+#   /home/$USER/roh_param_project/$PROJ/scripts/neutral_chrom_evo_and_sample.slim
+
+## models chromosome with coding and non-coding regions
 slim \
-  -d MUTATION_RATE=100e-8 \
-  -d REC_RATE=250e-8 \
-  -d CHR_LENGTH=30000000 \
-  -d POP_SIZE=500 \
-  -d "OUT_PATH='/scratch/${USER}_${PROJ}/slim_output_files/'" \
-  /home/$USER/roh_param_project/$PROJ/scripts/chrom_evo_and_sample.slim
+	-d POP_SIZE=500 \
+	-d "OUT_PATH='/scratch/${USER}_${PROJ}/slim_output_files/'" \
+	/home/$USER/roh_param_project/$PROJ/scripts/chrom_w_struct_and_evo.slim
 
 currentDate=`date`
 echo $currentDate
 
 ## --------------------------------
 ## Format SLiM output for read simulation
+module purge
+module load bcftools/1.13
+
 cd slim_output_files/
 
 ## Compress output VCF
@@ -83,7 +91,8 @@ bcftools +split -O z -o sample_vcf_files/ ./slim_output_files/final_pop.vcf.gz
 ## >> downsampling if we need to run multiple replicate simulations later on.
 cd sample_vcf_files
 
-for a in 15 30 50 100
+# for a in 15 30 50 100
+for a in 100
 	do
 	ls i*.vcf.gz | sort -R | tail -$a > ../vcf_file_list_n.$a.txt
 	sed 's/.vcf.gz//g' ../vcf_file_list_n.$a.txt > ../sample_id_list_n.$a.txt
@@ -95,7 +104,8 @@ cd ../
 mkdir sample_fasta_files
 cd sample_fasta_files/
 
-for a in 15 30 50 100
+# for a in 15 30 50 100
+for a in 100
 	do
 	while read -a line
 		do
@@ -126,3 +136,5 @@ for a in 15 30 50 100
 	
 		done < ../sample_id_list_n.$a.txt
 	done
+
+mail -s 'SLiM run finished' avrilharder@gmail.com <<< 'SLiM run finished'
