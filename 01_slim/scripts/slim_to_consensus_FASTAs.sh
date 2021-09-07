@@ -21,7 +21,7 @@
 #    -- /input/ and /output/ subdirs within project dir
 
 ##  Set username
-USER=aubaxh002
+USER=aubkbk001
 
 ## Set project name
 PROJ=01_slim
@@ -137,4 +137,4 @@ for a in 100
 		done < ../sample_id_list_n.$a.txt
 	done
 
-mail -s 'SLiM run finished' avrilharder@gmail.com <<< 'SLiM run finished'
+mail -s 'SLiM run finished' kirkseykb1@appstate.edu <<< 'SLiM run finished'
