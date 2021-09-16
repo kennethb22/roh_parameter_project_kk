@@ -1,21 +1,25 @@
 // Keywords: 
 
 initialize() {
-	initializeMutationRate(1e-7);
+	initializeSLiMOptions(nucleotideBased=T);
+	initializeAncestralNucleotides(randomNucleotides(30e6));	
 	
-	initializeMutationType("m1", 0.5, "f", 0.0);         // non-coding
-	initializeMutationType("m2", 0.5, "f", 0.0);         // synonymous
-	initializeMutationType("m3", 0.1, "g", -0.03, 0.2);  // deleterious
-	initializeMutationType("m4", 0.8, "e", 0.1);         // beneficial
+	// set up mutation types
+	initializeMutationTypeNuc("m1", 0.5, "f", 0.0);         // non-coding
+	initializeMutationTypeNuc("m2", 0.5, "f", 0.0);         // synonymous
+	initializeMutationTypeNuc("m3", 0.1, "g", -0.03, 0.2);  // deleterious
+	initializeMutationTypeNuc("m4", 0.8, "e", 0.1);         // beneficial
 	
-	initializeGenomicElementType("g1", c(m2,m3,m4), c(2,8,0.1));  // exon
-	initializeGenomicElementType("g2", c(m1,m3), c(9,1));       // intron
-	initializeGenomicElementType("g3", c(m1), 1);           // non-coding
+	// set up genomic features
+	initializeGenomicElementType("g1", c(m2,m3,m4), c(2,8,0.1), mmJukesCantor(MUTATION_RATE/3));  // exon
+	initializeGenomicElementType("g2", c(m1,m3), c(9,1), mmJukesCantor(MUTATION_RATE/3));       // intron
+	initializeGenomicElementType("g3", c(m1), 1, mmJukesCantor(MUTATION_RATE/3)); // non-coding
+	
 	
 	// Generate random genes along an approximately 100000-base chromosome
 	base = 0;
 	
-	while (base < 30e6) {
+	while (base < 29.59999e6) {
 		// make a non-coding region
 		nc_length = rdunif(1, 100, 5000);
 		initializeGenomicElement(g3, base, base + nc_length - 1);
@@ -41,11 +45,11 @@ initialize() {
 	}
 	
 	// final non-coding region
-	nc_length = rdunif(1, 100, 5000);
+	nc_length = 30e6 - base;
 	initializeGenomicElement(g3, base, base + nc_length - 1);
 	
 	// single recombination rate
-	initializeRecombinationRate(1e-8);
+	initializeRecombinationRate(RECOMB_RATE);
 }
 1 {	
 	// Output ancestral sequence in fasta format
@@ -55,7 +59,8 @@ initialize() {
 	writeFile(OUT_PATH + "ancestral.fasta", sequence, append=T);
 	sim.addSubpop("p1", POP_SIZE);
 }
-100 late() {
+// # of generations to run
+10000 late() {
 
 	// This line works by itself to output all individuals in the population
 	p1.genomes.outputVCF(OUT_PATH + "final_pop.vcf");
