@@ -22,7 +22,7 @@
 
 ##  Set username
 USER=aubkbk001
-
+#foo
 ## Set project name
 PROJ=02_read_sim_and_qc
 
