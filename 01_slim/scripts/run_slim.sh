@@ -69,79 +69,79 @@ for m in 5e-07
 
 mail -s 'SLiM run finished - Starting BCFtools' ${EMAIL} <<< 'SLiM run finished - Starting BCFtools'
 
-# ## --------------------------------
-# ## Format SLiM output for read simulation
-# module purge
-# module load bcftools/1.13
+## --------------------------------
+## Format SLiM output for read simulation
+module purge
+module load bcftools/1.13
 
-# ## final run settings (w/ 10e3 generations):
-# for m in 5e-07
-# 	do
-# 	for r in 1e-8
-# 		do
-# 		for p in  500 
-# 			do
-# 			cd /scratch/${USER}_${PROJ}/slim_output_files_m${m}_r${r}_p${p}/
+## final run settings (w/ 10e3 generations):
+for m in 5e-07
+	do
+	for r in 1e-8
+		do
+		for p in  500 
+			do
+			cd ${OUTPUT_DIR}/slim_output_files_m${m}_r${r}_p${p}
 
-# 			## Compress output VCF
-# 			bgzip final_pop.vcf
+			## Compress output VCF
+			bgzip final_pop.vcf
 
-# 			## Index compressed VCF
-# 			tabix final_pop.vcf.gz
+			## Index compressed VCF
+			tabix final_pop.vcf.gz
 
-# 			## Split output VCF into sample-specific VCF files
-# 			cd ../
-# 			mkdir sample_vcf_files_m${m}_r${r}_p${p}
-# 			bcftools +split -O z -o sample_vcf_files_m${m}_r${r}_p${p}/ ./slim_output_files_m${m}_r${r}_p${p}/final_pop.vcf.gz
-
-
-# 			## Randomly select sample VCF files for conversation to FASTAs
-# 			## >> Selecting 100, can be downsampled later
-# 			cd sample_vcf_files_m${m}_r${r}_p${p}/
-
-# 			ls i*.vcf.gz | sort -R | tail -100 > ../vcf_file_list_m${m}_r${r}_p${p}.txt
-# 			sed 's/.vcf.gz//g' ../vcf_file_list_m${m}_r${r}_p${p}.txt > ../sample_id_list_m${m}_r${r}_p${p}.txt
+			## Split output VCF into sample-specific VCF files
+			cd ../
+			mkdir sample_vcf_files_m${m}_r${r}_p${p}
+			bcftools +split -O z -o sample_vcf_files_m${m}_r${r}_p${p}/ ./slim_output_files_m${m}_r${r}_p${p}/final_pop.vcf.gz
 
 
-# 			## Convert sample VCF files to two separate haplotype FASTAs per individual
-# 			cd ../
-# 			mkdir sample_fasta_files_m${m}_r${r}_p${p}
-# 			cd sample_fasta_files_m${m}_r${r}_p${p}/
+			## Randomly select sample VCF files for conversation to FASTAs
+			## >> Selecting 100, can be downsampled later
+			cd sample_vcf_files_m${m}_r${r}_p${p}/
 
-# 			while read -a line
-# 				do
-# 				tabix ../sample_vcf_files_m${m}_r${r}_p${p}/${line[0]}.vcf.gz
+			ls i*.vcf.gz | sort -R | tail -100 > ../vcf_file_list_m${m}_r${r}_p${p}.txt
+			sed 's/.vcf.gz//g' ../vcf_file_list_m${m}_r${r}_p${p}.txt > ../sample_id_list_m${m}_r${r}_p${p}.txt
+
+
+			## Convert sample VCF files to two separate haplotype FASTAs per individual
+			cd ../
+			mkdir sample_fasta_files_m${m}_r${r}_p${p}
+			cd sample_fasta_files_m${m}_r${r}_p${p}/
+
+			while read -a line
+				do
+				tabix ../sample_vcf_files_m${m}_r${r}_p${p}/${line[0]}.vcf.gz
 	
-# 				bcftools norm --check-ref s \
-# 				--fasta-ref ../slim_output_files_m${m}_r${r}_p${p}/ancestral.fasta \
-# 				--multiallelics - \
-# 				--do-not-normalize \
-# 				--output ../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf \
-# 				../sample_vcf_files_m${m}_r${r}_p${p}/${line[0]}.vcf.gz
+				bcftools norm --check-ref s \
+				--fasta-ref ../slim_output_files_m${m}_r${r}_p${p}/ancestral.fasta \
+				--multiallelics - \
+				--do-not-normalize \
+				--output ../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf \
+				../sample_vcf_files_m${m}_r${r}_p${p}/${line[0]}.vcf.gz
 	
-# 				bgzip ../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf
-# 				tabix ../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf.gz
+				bgzip ../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf
+				tabix ../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf.gz
 
-# 				bcftools +fixref ../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf.gz -- \
-# 				--fasta-ref ../slim_output_files_m${m}_r${r}_p${p}/ancestral.fasta
+				bcftools +fixref ../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf.gz -- \
+				--fasta-ref ../slim_output_files_m${m}_r${r}_p${p}/ancestral.fasta
 		
-# 				bcftools consensus --haplotype 1 \
-# 				--fasta-ref ../slim_output_files_m${m}_r${r}_p${p}/ancestral.fasta \
-# 				--output ${line[0]}_1.fasta \
-# 				../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf.gz
+				bcftools consensus --haplotype 1 \
+				--fasta-ref ../slim_output_files_m${m}_r${r}_p${p}/ancestral.fasta \
+				--output ${line[0]}_1.fasta \
+				../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf.gz
 
-# 				bcftools consensus --haplotype 2 \
-# 				--fasta-ref ../slim_output_files_m${m}_r${r}_p${p}/ancestral.fasta \
-# 				--output ${line[0]}_2.fasta \
-# 				../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf.gz
+				bcftools consensus --haplotype 2 \
+				--fasta-ref ../slim_output_files_m${m}_r${r}_p${p}/ancestral.fasta \
+				--output ${line[0]}_2.fasta \
+				../sample_vcf_files_m${m}_r${r}_p${p}/norm_${line[0]}.vcf.gz
 
-# 				done < ../sample_id_list_m${m}_r${r}_p${p}.txt
-# 			done
-# 		done
-# 	done
+				done < ../sample_id_list_m${m}_r${r}_p${p}.txt
+			done
+		done
+	done
 
 
-# mail -s 'SLiM run finished - submit Rviz' ${EMAIL} <<< 'SLiM run finished'
+mail -s 'SLiM run finished - submit Rviz' ${EMAIL} <<< 'SLiM run finished'
 
 # -----------------------------------------------------------------------------
 # Copy output files to user's home directory. If an output directory exists

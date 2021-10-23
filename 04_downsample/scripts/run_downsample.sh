@@ -24,15 +24,30 @@
 # Set Variables
 # -----------------------------------------------------------------------------
 
-#
 ## Load variables from settings file
 source /home/aubkbk001/roh_param_project/init_script_vars.sh
+
+
+## Create arrays of downsample levels to be used.
+## Coverage level in NNx for display in output file names
+declare -a cvgX=(50x 30x 15x 10x 05x)
+
+## Coverage level fraction to supply to samtools
+declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
+
+## Get length of the coverage level arrays. Subtract 1 because arrays are zero
+## based, and we'll iterate over the arrays from 0 to cvgCnt
+cvgCnt=${#cvgX[@]}
+let cvgCnt-=1
+
+## Create array of population sizes we want to test
+declare -a popN=(100 50 30)
 
 ## Set step name
 STEP=04_downsample
 PREV_STEP=03_read_align
 
-## Create variable pointing to user's home directory for this step
+## Create variable pointing to user's home directory for this project and step
 HOME_DIR=/home/${USER}/${PROJECT}/${STEP}/
 
 ## Set the input directory, which is the output directory from the previous
@@ -49,45 +64,45 @@ mkdir ${WORK_DIR}/output
 chmod -R 700 ${WORK_DIR} 
 OUTPUT_DIR=${WORK_DIR}/output 
 
-## cd into working scratch directory
-cd ${WORK_DIR}
-
+# -----------------------------------------------------------------------------
+# Load modules
+# -----------------------------------------------------------------------------
+module load samtools/1.11
 
 # -----------------------------------------------------------------------------
-# do the downsample
+# Do the downsampling.
 # -----------------------------------------------------------------------------
 
-# Create a mapping of downsample fractions to coverage levels. Used to display
-# coverage levels in file and directory names
-declare -A COVERX
-COVERX[1.0]=50x
-COVERX[0.6]=30x
-COVERX[0.3]=15x
-COVERX[0.2]=10x
-COVERX[0.1]=05x
-
-# -----------------------------------------------------------------------------
-# Create text files listing sample individuals for each population size we
-# want to test. Create directories for saving downsampled BAM files
-# -----------------------------------------------------------------------------
-
-for population in 100 50 30
+# Create subsets of various sizes of the initial sample population
+# for population in 100 50 30
+for population in ${popN[@]}
 do
-    # Randomly choose n individuals from original population
-    # Save list to file (pop_{population}_sample_list.txt)
+    # Randomly choose n individuals from original population. Save list of 
+    # individuals to a text file
 	cd ${INPUT_DIR}
-
 	ls i*.bam| sort -R | tail -${population} > ../sample_list.txt
 	sed 's/_genome_sorted.bam//g' ../sample_list.txt > ${OUTPUT_DIR}/sample_id_list_pop_${population}.txt
     rm ../sample_list.txt
 
-	for coverage in 1.0 0.6 0.3 0.2 0.1
-	do
-        mkdir ${OUTPUT_DIR}/sample_pop${population}_cvg_${COVERX[$coverage]}
-        # echo ${COVERX[$coverage]}
+    # Downsample each individual in the population to the specified levels of
+    # coverage 
+	for i in $(seq 0 $cvgCnt)
+ 	do
+        # Create output directory for each population size and coverage level
+        # combination.
+        POP_CVG_OUTPUT_DIR=${OUTPUT_DIR}/sample_pop_${population}_cvg_${cvgX[i]}
+        mkdir ${POP_CVG_OUTPUT_DIR}
+
+        # Downsample each individual
+        while read -a line
+        do
+            samtools view -s ${cvgP[i]} -@ 19 \
+              -o ${POP_CVG_OUTPUT_DIR}/${line[0]}_pop_${population}_cvg_${cvgX[i]}.bam \
+              ${INPUT_DIR}/${line[0]}_genome_sorted.bam
+    
+        done < ${OUTPUT_DIR}/sample_id_list_pop_${population}.txt
 	done
 done
-
 
 # -----------------------------------------------------------------------------
 # Copy output files to user's home directory. If an output directory exists
