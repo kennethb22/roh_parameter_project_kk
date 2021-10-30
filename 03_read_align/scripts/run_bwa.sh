@@ -24,14 +24,8 @@
 # Set Variables
 # -----------------------------------------------------------------------------
 
-##  Set username
-USER=aubkbk001
-
-## Set project name
-PROJ=03_read_align
-
-## Set location of reference genome file
-REF_GENOME_FILE=/scratch/${USER}_01_slim/slim_output_files_m5e-07_r1e-8_p500/ancestral.fasta
+## Load variables from settings file
+source /home/aubkbk001/roh_param_project/init_script_vars.sh
 
 ## Set location of file contaning list of sample files to process
 SAMPLE_LIST_DIR=/scratch/aubkbk001_01_slim/
@@ -87,24 +81,18 @@ bwa index ${REF_GENOME_FILE}
 # Align reads to reference genome
 # -----------------------------------------------------------------------------
 
-while read -a line
-do
+while read -a line; do
     bwa mem -t 20 -M \
-    ${REF_GENOME_FILE} \
-    ./input/${line[0]}_f.fq\
-    ./input/${line[0]}_r.fq\
-    > ${OUTPUT_DIR_UNSORTED}${line[0]}_genome.bam
-done < ${SAMPLE_LIST_DIR}${SAMPLE_LIST_FILE_NAME}
-    
+        ${REF_GENOME_FILE} \
+        ./input/${line[0]}_f.fq ./input/${line[0]}_r.fq >${OUTPUT_DIR_UNSORTED}${line[0]}_genome.bam
+done <${SAMPLE_LIST_DIR}${SAMPLE_LIST_FILE_NAME}
+
 # -----------------------------------------------------------------------------
 # Sort aligned read bam files
 # -----------------------------------------------------------------------------
 
-while read -a line
-do
+while read -a line; do
     samtools sort -@ 19 \
-    -o ${OUTPUT_DIR_SORTED}${line[0]}_genome_sorted.bam \
-    ${OUTPUT_DIR_UNSORTED}${line[0]}_genome.bam
-done < ${SAMPLE_LIST_DIR}${SAMPLE_LIST_FILE_NAME}
-    
-
+        -o ${OUTPUT_DIR_SORTED}${line[0]}_genome_sorted.bam \
+        ${OUTPUT_DIR_UNSORTED}${line[0]}_genome.bam
+done <${SAMPLE_LIST_DIR}${SAMPLE_LIST_FILE_NAME}
