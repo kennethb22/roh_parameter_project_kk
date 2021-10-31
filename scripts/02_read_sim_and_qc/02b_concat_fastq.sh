@@ -53,11 +53,10 @@ chmod 700 ${OUTPUT_DIR_NAME}
 # ## cd into directory with output files from art
 cd ${INPUT_DIR}
 
-# Concatenate files 
+# Concatenate files
 
-while read -a line
-	do
-        cat ${line[0]}_11.fq ${line[0]}_21.fq > ${OUTPUT_DIR}${line[0]}_f.fq
-        cat ${line[0]}_12.fq ${line[0]}_22.fq > ${OUTPUT_DIR}${line[0]}_r.fq
-  	done < ${LIST_DIR}${LIST_FILE_NAME}
- mail -s 'FASTQ concatenate finished' kirkseykb1@appstate.edu <<< 'Concatenation finished'
+while read -a line; do
+    cat ${line[0]}_11.fq ${line[0]}_21.fq >${OUTPUT_DIR}${line[0]}_f.fq
+    cat ${line[0]}_12.fq ${line[0]}_22.fq >${OUTPUT_DIR}${line[0]}_r.fq
+done <${LIST_DIR}${LIST_FILE_NAME}
+mail -s 'FASTQ concatenate finished' kirkseykb1@appstate.edu <<<'Concatenation finished'
