@@ -42,10 +42,14 @@ ref=/scratch/aubaxh002_assem_indexing/hifiasm_kangaroo_rat_6cells.p_ctg.fasta
 
 ## -V [sample VCF file]; unfortunately, no easy way to just provide a file with names;
 ## will need one -V line per sample
+
+OUT_DIR=/scratch/aubkbk001/roh_param_project/05_var_call/output/sample_pop_03_cvg_05x
+
 gatk GenomicsDBImport \
-    -V sampfix_3811_S67_nobaseQrecal.g.vcf \
-    -V sampfix_3850_S45_nobaseQrecal.g.vcf \
-    -V sampfix_3910_S63_nobaseQrecal.g.vcf \
+    -V ${OUT_DIR}/i31_pop_03_cvg_05x.g.vcf \
+    -V ${OUT_DIR}/i322_pop_03_cvg_05x.g.vcf \
+    -V ${OUT_DIR}/i428_pop_03_cvg_05x.g.vcf \
+    -L 20 \
     --genomicsdb-workspace-path simchr_database_gatk_genomics
 
 gatk GenotypeGVCFs \
