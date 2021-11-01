@@ -25,7 +25,7 @@
 # -----------------------------------------------------------------------------
 
 ## Load variables from settings file
-source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
+source /home/aubkbk001/roh_param_project/scripts/99_includesinit_script_vars.sh
 
 ## Set step name
 STEP=01_slim
@@ -138,7 +138,14 @@ done
 mail -s 'SLiM run finished - submit Rviz' ${EMAIL} <<<'SLiM run finished'
 
 # -----------------------------------------------------------------------------
-# Copy output files to user's home directory.
+# Copy output files to user's home directory. If an output directory exists
+# in the user's home directory, rename the existing output directory, then
+# copy the new output directory.
 # -----------------------------------------------------------------------------
 
-source /home/aubkbk001/roh_param_project/scripts/99_includes/backup_output.sh
+if [ -d "$HOME_DIR/output" ]; then
+    TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
+    mv ${HOME_DIR}/output ${HOME_DIR}/output_${TIMESTAMP}
+fi
+
+cp -r ${OUTPUT_DIR} ${HOME_DIR}/output
