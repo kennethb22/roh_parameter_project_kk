@@ -52,6 +52,13 @@ gatk GenomicsDBImport \
     -L 1 \
     --genomicsdb-workspace-path simchr_database_gatk_genomics
 
+gatk CombineGVCFs \
+    -R /scratch/aubkbk001/roh_param_project/data/01_slim/output/slim_output_files_m5e-07_r1e-8_p500/ancestral.fasta \
+    -V ${OUT_DIR}/i31_pop_03_cvg_05x.g.vcf \
+    -V ${OUT_DIR}/i322_pop_03_cvg_05x.g.vcf \
+    -V ${OUT_DIR}/i428_pop_03_cvg_05x.g.vcf \
+    -O cohort.g.vcf.gz
+
 gatk ValidateVariants \
     -V ${OUT_DIR}/i31_pop_03_cvg_05x.g.vcf \
     -R /scratch/aubkbk001/roh_param_project/data/01_slim/output/slim_output_files_m5e-07_r1e-8_p500/ancestral.fasta

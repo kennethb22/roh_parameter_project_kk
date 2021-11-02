@@ -97,9 +97,9 @@ for population in ${popN[@]}; do
         POP_CVG_INPUT_DIR=${INPUT_DIR}/sample_pop_${population}_cvg_${cvgX[i]}
 
         # Set name of map file for this population and coverage. This file
-        # is used in 05b_genomicsdb.sh to import the samples into GenomicsDB
+        # is used in 05b_genomicsdb.sh
 
-        MAP_FILE=${OUTPUT_DIR}/sample_pop_${population}_cvg_${cvgX[i]}_map.txt
+        MAP_FILE=${OUTPUT_DIR}/sample_pop_${population}_cvg_${cvgX[i]}_map.list
 
         # Delete map file if it exists
 
@@ -111,82 +111,81 @@ for population in ${popN[@]}; do
 
         while read -a line; do
 
-            ## Add read group information --------------------------------------
+            # Add read group information --------------------------------------
 
-            ## Set action and start time for log
+            # ## Set action and start time for log
 
-            OUT_FILE=${line[0]}_pop_${population}_cvg_${cvgX[i]}_rgroups.bam
-            ACTION="picard/AddOrReplaceReadGroups - ${OUT_FILE}"
-            START_TIME_HHMM=$(date +" %T")
-            START_TIME=$(date +%s)
+            # OUT_FILE=${line[0]}_pop_${population}_cvg_${cvgX[i]}_rgroups.bam
+            # ACTION="picard/AddOrReplaceReadGroups - ${OUT_FILE}"
+            # START_TIME_HHMM=$(date +" %T")
+            # START_TIME=$(date +%s)
 
-            ## Do picard read groups
+            # ## Do picard read groups
 
-            java -jar /opt/asn/apps/picard_1.79/picard_1.79/picard-tools-1.79/AddOrReplaceReadGroups.jar \
-                I=${POP_CVG_INPUT_DIR}/${line[0]}_pop_${population}_cvg_${cvgX[i]}.bam \
-                O=$${POP_CVG_OUTPUT_DIR}/{OUT_FILE} SORT_ORDER=coordinate RGID=group1 RGLB=lib1 RGPL=illumina RGSM=${line[0]} RGPU=unit4
+            # java -jar /opt/asn/apps/picard_1.79/picard_1.79/picard-tools-1.79/AddOrReplaceReadGroups.jar \
+            #     I=${POP_CVG_INPUT_DIR}/${line[0]}_pop_${population}_cvg_${cvgX[i]}.bam \
+            #     O=$${POP_CVG_OUTPUT_DIR}/{OUT_FILE} SORT_ORDER=coordinate RGID=group1 RGLB=lib1 RGPL=illumina RGSM=${line[0]} RGPU=unit4
 
-            ## Write line to log file for this action
+            # ## Write line to log file for this action
 
-            END_TIME_HHMM=$(date +"%T")
-            END_TIME=$(date +%s)
-            ELAPSED=$(expr $END_TIME - $START_TIME)
-            DURATION=$(date -u -d @${ELAPSED} +"%T")
-            printf '%-80s   %8s   %8s   %8s\n' "${ACTION}" ${START_TIME_HHMM} ${END_TIME_HHMM} ${DURATION} >>${LOG_FILE}
+            # END_TIME_HHMM=$(date +"%T")
+            # END_TIME=$(date +%s)
+            # ELAPSED=$(expr $END_TIME - $START_TIME)
+            # DURATION=$(date -u -d @${ELAPSED} +"%T")
+            # printf '%-80s   %8s   %8s   %8s\n' "${ACTION}" ${START_TIME_HHMM} ${END_TIME_HHMM} ${DURATION} >>${LOG_FILE}
 
-            ## Index BAM files -------------------------------------------------
+            # ## Index BAM files -------------------------------------------------
 
-            ## Set action and start time for log
+            # ## Set action and start time for log
 
-            OUT_FILE=${line[0]}_pop_${population}_cvg_${cvgX[i]}_rgroups.bai
-            ACTION="picard/BuildBamIndex - ${OUT_FILE}"
-            START_TIME_HHMM=$(date +" %T")
-            START_TIME=$(date +%s)
+            # OUT_FILE=${line[0]}_pop_${population}_cvg_${cvgX[i]}_rgroups.bai
+            # ACTION="picard/BuildBamIndex - ${OUT_FILE}"
+            # START_TIME_HHMM=$(date +" %T")
+            # START_TIME=$(date +%s)
 
-            ## Run picard BuildBamIndex
+            # ## Run picard BuildBamIndex
 
-            java -jar /opt/asn/apps/picard_1.79/picard_1.79/picard-tools-1.79/BuildBamIndex.jar \
-                I=${POP_CVG_OUTPUT_DIR}/${line[0]}_pop_${population}_cvg_${cvgX[i]}_rgroups.bam
+            # java -jar /opt/asn/apps/picard_1.79/picard_1.79/picard-tools-1.79/BuildBamIndex.jar \
+            #     I=${POP_CVG_OUTPUT_DIR}/${line[0]}_pop_${population}_cvg_${cvgX[i]}_rgroups.bam
 
-            ## Write line to log file for this action
+            # ## Write line to log file for this action
 
-            END_TIME_HHMM=$(date +"%T")
-            END_TIME=$(date +%s)
-            ELAPSED=$(expr $END_TIME - $START_TIME)
-            DURATION=$(date -u -d @${ELAPSED} +"%T")
-            printf '%-80s   %8s   %8s   %8s\n' "${ACTION}" ${START_TIME_HHMM} ${END_TIME_HHMM} ${DURATION} >>${LOG_FILE}
+            # END_TIME_HHMM=$(date +"%T")
+            # END_TIME=$(date +%s)
+            # ELAPSED=$(expr $END_TIME - $START_TIME)
+            # DURATION=$(date -u -d @${ELAPSED} +"%T")
+            # printf '%-80s   %8s   %8s   %8s\n' "${ACTION}" ${START_TIME_HHMM} ${END_TIME_HHMM} ${DURATION} >>${LOG_FILE}
 
-            ## Run HaplotypeCaller in GVCF mode --------------------------------
+            # ## Run HaplotypeCaller in GVCF mode --------------------------------
 
-            ## Set action and start time for log
+            # ## Set action and start time for log
 
-            OUT_FILE=${line[0]}_pop_${population}_cvg_${cvgX[i]}.g.vcf
-            ACTION="gatk Haplotype Caller - ${OUT_FILE}"
-            START_TIME_HHMM=$(date +" %T")
-            START_TIME=$(date +%s)
+            # OUT_FILE=${line[0]}_pop_${population}_cvg_${cvgX[i]}.g.vcf
+            # ACTION="gatk Haplotype Caller - ${OUT_FILE}"
+            # START_TIME_HHMM=$(date +" %T")
+            # START_TIME=$(date +%s)
 
-            ## Run gatk HaplotypeCaller
+            # ## Run gatk HaplotypeCaller
 
-            gatk HaplotypeCaller \
-                -R ${REF_GENOME_FILE} \
-                -I ${POP_CVG_OUTPUT_DIR}/${line[0]}_pop_${population}_cvg_${cvgX[i]}_rgroups.bam \
-                -stand-call-conf 20.0 \
-                --emit-ref-confidence GVCF \
-                -O ${POP_CVG_OUTPUT_DIR}/${OUT_FILE}
+            # gatk HaplotypeCaller \
+            #     -R ${REF_GENOME_FILE} \
+            #     -I ${POP_CVG_OUTPUT_DIR}/${line[0]}_pop_${population}_cvg_${cvgX[i]}_rgroups.bam \
+            #     -stand-call-conf 20.0 \
+            #     --emit-ref-confidence GVCF \
+            #     -O ${POP_CVG_OUTPUT_DIR}/${OUT_FILE}
 
-            ## Write line to log file for this action
+            # ## Write line to log file for this action
 
-            END_TIME_HHMM=$(date +"%T")
-            END_TIME=$(date +%s)
-            ELAPSED=$(expr $END_TIME - $START_TIME)
-            DURATION=$(date -u -d @${ELAPSED} +"%T")
-            printf '%-80s   %8s   %8s   %8s\n' "${ACTION}" ${START_TIME_HHMM} ${END_TIME_HHMM} ${DURATION} >>${LOG_FILE}
+            # END_TIME_HHMM=$(date +"%T")
+            # END_TIME=$(date +%s)
+            # ELAPSED=$(expr $END_TIME - $START_TIME)
+            # DURATION=$(date -u -d @${ELAPSED} +"%T")
+            # printf '%-80s   %8s   %8s   %8s\n' "${ACTION}" ${START_TIME_HHMM} ${END_TIME_HHMM} ${DURATION} >>${LOG_FILE}
 
-            ## Write line for sample to map file.
+            # Write line for sample to map file.
 
             printf "%s\t%s\n" \
-                ${line[0]} \
-                ${line[0]}_pop_${population}_cvg_${cvgX[i]}.g.vcf \
+                ${POP_CVG_OUTPUT_DIR}/${line[0]}_pop_${population}_cvg_${cvgX[i]}.g.vcf \
                 >>$MAP_FILE
 
         done <${INPUT_DIR}/sample_id_list_pop_${population}.txt

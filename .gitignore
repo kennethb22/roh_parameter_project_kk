@@ -5,3 +5,4 @@ archive/
 ./_c*_/
 ./_*_/
 ./*/output
+.history
