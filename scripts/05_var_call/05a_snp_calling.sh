@@ -54,6 +54,24 @@ module load picard/1.79
 module load gatk/4.1.4.0
 
 # -----------------------------------------------------------------------------
+# Create log file
+# -----------------------------------------------------------------------------
+
+# Set name of log file to track execution times
+
+LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_log.txt
+
+# Delete log file if it exists
+
+if [ -f "$LOG_FILE" ]; then
+    rm ${LOG_FILE}
+fi
+
+# Write header to log file
+
+printf "%-80s   %8s   %8s   %8s\n" "Action - Output" "Start" "End" "Duration" >>${LOG_FILE}
+
+# -----------------------------------------------------------------------------
 # Run Haplotype caller on all sample files
 # -----------------------------------------------------------------------------
 
@@ -88,19 +106,6 @@ for population in ${popN[@]}; do
         if [ -f "$MAP_FILE" ]; then
             rm ${MAP_FILE}
         fi
-
-        # Set name of log file to track execution times
-
-        LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_sample_pop_${population}_cvg_${cvgX[i]}_log.txt
-
-        # Delete log file if it exists
-        if [ -f "$LOG_FILE" ]; then
-            rm ${LOG_FILE}
-        fi
-
-        # Write header to log file
-
-        printf "%-80s   %8s   %8s   %8s\n" "Action - Output" "Start" "End" "Duration" >>${LOG_FILE}
 
         # Process each individual sample file ----------------------------------
 

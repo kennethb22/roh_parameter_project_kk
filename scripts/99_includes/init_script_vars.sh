@@ -34,10 +34,12 @@ STEP=01_slim
 ## Create arrays of downsample levels to be used.
 ## Coverage level in NNx for display in output file names
 # declare -a cvgX=(50x 30x 15x 10x 05x)
+# declare -a cvgX=(50x 30x)
 declare -a cvgX=(05x)
 
 ## Coverage level fraction to supply to samtools
 # declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
+# declare -a cvgP=(1.0 0.6)
 declare -a cvgP=(0.1)
 
 ## Get length of the coverage level arrays. Subtract 1 because arrays are zero
@@ -47,8 +49,8 @@ let cvgCnt-=1
 
 ## Create array of population sizes we want to test
 # declare -a popN=(100 50 30)
-declare -a popN=(03)
-# declare -a popN=(01)
+# declare -a popN=(03)
+declare -a popN=(01)
 
 # -----------------------------------------------------------------------------
 ## Set location of reference genome file
