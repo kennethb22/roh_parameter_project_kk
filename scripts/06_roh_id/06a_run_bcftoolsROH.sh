@@ -72,9 +72,9 @@ for population in ${popN[@]}; do
         ## Set action and start time for log
 
         IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_final_SNPs.vcf
-        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_filteredSNPs.tab.gz
+        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_filteredSNPs.tab.gz
 
-        start_logging "bcftools query/tabix"
+        start_logging "bcftools query/tabix  - ${OUT_FILE}"
 
         # Extract allele frequencies from sample vcf
 
@@ -86,21 +86,26 @@ for population in ${popN[@]}; do
         stop_logging
 
         # ----------------------------------------------------------------------
-        # ROH Calling
+        # ROH Calling - Using Genotypes only
         # ----------------------------------------------------------------------
 
         IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_final_SNPs.vcf
-        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_roh.txt
-        AF_FILE=sample_pop_${population}_cvg_${cvgX[i]}_filteredSNPs.tab.gz
+        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_gt.txt
+        AF_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_filteredSNPs.tab.gz
 
-        start_logging "bcftools roh"
+        start_logging "bcftools roh gt - ${OUT_FILE}"
 
-        # ## SNPs filtered using more stringent criteria
+        # bcftools roh \
+        #     --GTs-only 30 \
+        #     --threads 20 \
+        #     -o ${OUTPUT_DIR}/${OUT_FILE} \
+        #     --AF-file ${OUTPUT_DIR}/${AF_FILE} \
+        #     ${INPUT_DIR}/${IN_FILE}
+
         bcftools roh \
             --GTs-only 30 \
-            --threads 20 \
+            --AF-dflt 0.4 \
             -o ${OUTPUT_DIR}/${OUT_FILE} \
-            --AF-file ${OUTPUT_DIR}/${AF_FILE} \
             ${INPUT_DIR}/${IN_FILE}
 
         # ----------------------------------------------------------------------
@@ -108,12 +113,40 @@ for population in ${popN[@]}; do
         # sites
         # ----------------------------------------------------------------------
 
-        IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_roh.txt
-        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_roh_RG_ONLY.txt
+        IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_gt.txt
+        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_gt_RG_ONLY.txt
         grep "^RG" ${OUTPUT_DIR}/${IN_FILE} > \
             ${OUTPUT_DIR}/${OUT_FILE}
 
         stop_logging
+
+        # # ----------------------------------------------------------------------
+        # # ROH Calling - Using Genotypes and genotype liklihoods
+        # # ----------------------------------------------------------------------
+
+        # IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_final_SNPs.vcf
+        # OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_pl.txt
+        # AF_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_filteredSNPs.tab.gz
+
+        # start_logging "bcftools roh pl - ${OUT_FILE}"
+
+        # bcftools roh \
+        #     --threads 20 \
+        #     -o ${OUTPUT_DIR}/${OUT_FILE} \
+        #     --AF-file ${OUTPUT_DIR}/${AF_FILE} \
+        #     ${INPUT_DIR}/${IN_FILE}
+
+        # # ----------------------------------------------------------------------
+        # # Extract information on ROHS i.e., exlcude information on individual
+        # # sites
+        # # ----------------------------------------------------------------------
+
+        # IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_pl.txt
+        # OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_pl_RG_ONLY.txt
+        # grep "^RG" ${OUTPUT_DIR}/${IN_FILE} > \
+        #     ${OUTPUT_DIR}/${OUT_FILE}
+
+        # stop_logging
 
     done
 

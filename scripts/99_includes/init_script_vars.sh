@@ -25,6 +25,10 @@ EMAIL=kirkseykb1@appstate.edu
 ## Set initial step name
 INIT_STEP=01_slim
 
+# -----------------------------------------------------------------------------
+# Create working directories
+# -----------------------------------------------------------------------------
+
 ## Create variable pointing to user's home directory for this project and step
 
 HOME_STEP_DIR=/home/${USER}/${PROJECT}/data/${STEP}/
@@ -44,12 +48,24 @@ chmod -R 700 ${WORK_DIR}
 OUTPUT_DIR=${WORK_DIR}/output
 
 # -----------------------------------------------------------------------------
-# Array defining coverage levels and population sizes. These arrays are used in
-# the steps:
+## Set location of reference genome file
+# -----------------------------------------------------------------------------
+
+REF_GENOME_FILE_PATH=/scratch/${USER}/${PROJECT}/data/${INIT_STEP}/output/slim_output_files_m5e-07_r1e-8_p500
+
+REF_GENOME_FILE_NAME=ancestral
+
+REF_GENOME_FILE=${REF_GENOME_FILE_PATH}/${REF_GENOME_FILE_NAME}.fasta
+
+# -----------------------------------------------------------------------------
+# Create arrays defining coverage levels and population sizes. These arrays are
+# used in:
+#
 #    04_downsample.sh
 #    05a_snp_calling.sh
 #    05b_genomicsdb.sh
 #    06a_run_bcftoolsROH.sh
+#    06b_run_plink.sh
 # -----------------------------------------------------------------------------
 
 ## Create arrays of downsample levels to be used.
@@ -74,14 +90,36 @@ declare -a popN=(03)
 # declare -a popN=(01)
 
 # -----------------------------------------------------------------------------
-## Set location of reference genome file
+# PLINK parameters - define arrays for each of the PLINK parameters we want to
+# vary and test. Used in 06b_run_plink.sh
 # -----------------------------------------------------------------------------
 
-REF_GENOME_FILE_PATH=/scratch/${USER}/${PROJECT}/data/${INIT_STEP}/output/slim_output_files_m5e-07_r1e-8_p500
+declare -a phwh=(0 1 2 3)   # Values for -homozyg-window-het
+declare -a phwm=(5 10 50)   # Values for -homozyg-window-missing
+declare -a phws=(50)        # Values for -homozyg-window-snp
+declare -a phzd=(50)        # Values for -homozyg-density
+declare -a phzg=(1000)      # Values for -homozyg-gap
+declare -a phwt=(0.01 0.05) # Values for -homozyg-window-threshold
+declare -a phzs=(25 50 100) # Values for -homozyg-snp
+declare -a phzk=(10)        # Values for -homozyg-kb
 
-REF_GENOME_FILE_NAME=ancestral
+# -----------------------------------------------------------------------------
+# Create log file
+# -----------------------------------------------------------------------------
 
-REF_GENOME_FILE=${REF_GENOME_FILE_PATH}/${REF_GENOME_FILE_NAME}.fasta
+# Set name of log file to track execution times
+
+LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_log.txt
+
+# Delete log file if it exists
+
+if [ -f "$LOG_FILE" ]; then
+    rm ${LOG_FILE}
+fi
+
+# Write header to log file
+
+printf "%-80s   %8s   %8s   %8s\n" "Action - Output" "Start" "End" "Duration" >${LOG_FILE}
 
 # -----------------------------------------------------------------------------
 # Define Functions
@@ -91,7 +129,7 @@ REF_GENOME_FILE=${REF_GENOME_FILE_PATH}/${REF_GENOME_FILE_NAME}.fasta
 
 start_logging() {
 
-    ACTION="$1 - ${OUT_FILE}"
+    ACTION=$1
     START_TIME_HHMM=$(date +" %T")
     START_TIME=$(date +%s)
 }
