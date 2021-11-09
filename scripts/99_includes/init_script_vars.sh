@@ -38,24 +38,45 @@ HOME_STEP_DIR=/home/${USER}/${PROJECT}/data/${STEP}/
 INPUT_DIR=/scratch/${USER}/${PROJECT}/data/${PREV_STEP}/output
 
 ## Create a working directory on /scratch
-mkdir -p /scratch/${USER}/${PROJECT}/data/${STEP}
-chmod -R 700 /scratch/${USER}
 WORK_DIR=/scratch/${USER}/${PROJECT}/data/${STEP}
+mkdir -p ${WORK_DIR}
+chmod -R 700 /scratch/${USER}
 
 ## Create output directory in working directory
-mkdir ${WORK_DIR}/output
-chmod -R 700 ${WORK_DIR}
 OUTPUT_DIR=${WORK_DIR}/output
+mkdir ${OUTPUT_DIR}
+chmod -R 700 ${WORK_DIR}
 
 # -----------------------------------------------------------------------------
-## Set location of reference genome file
+## Set Slim parameters and directories
 # -----------------------------------------------------------------------------
 
-REF_GENOME_FILE_PATH=/scratch/${USER}/${PROJECT}/data/${INIT_STEP}/output/slim_output_files_m5e-07_r1e-8_p500
+# parameters
+
+MUTATION_RATE=5e-07
+RECOMB_RATE=1e-8
+POP_SIZE=500
+
+# directory and file paths
+
+INIT_OUTPUT_DIR=/scratch/${USER}/${PROJECT}/data/${INIT_STEP}/output
+
+FILE_LABELS=m${MUTATION_RATE}_r${RECOMB_RATE}_p${POP_SIZE}
+
+SLIM_OUT_DIR=slim_${FILE_LABELS}
+
+SLIM_PARAM_FILE=/home/${USER}/${PROJECT}/scripts/${STEP}/chrom_w_struct_and_evo.slim
+
+REF_GENOME_FILE_PATH=${INIT_OUTPUT_DIR}/${SLIM_OUT_DIR}
 
 REF_GENOME_FILE_NAME=ancestral
 
 REF_GENOME_FILE=${REF_GENOME_FILE_PATH}/${REF_GENOME_FILE_NAME}.fasta
+
+SAMPLE_ID_LIST=${INIT_OUTPUT_DIR}/sample_id_list_${FILE_LABELS}.txt
+
+FASTA_OUT_DIR=${INIT_OUTPUT_DIR}/sample_fasta_files_${FILE_LABELS}
+mkdir ${FASTA_OUT_DIR}
 
 # -----------------------------------------------------------------------------
 # Create arrays defining coverage levels and population sizes. These arrays are

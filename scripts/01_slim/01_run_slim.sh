@@ -19,6 +19,10 @@
 #    -- script to be run in /home/scripts
 #    -- project directory (of same name as script) in /home/
 #    -- /input/ and /output/ subdirs within project dir
+#
+# IMPORTANT: before running this script, you must set SLiM parameters in
+# init_script_vars.sh
+#
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
@@ -41,35 +45,30 @@ source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
 module load anaconda/3-2020.11
 
 # -----------------------------------------------------------------------------
-# Run SLiM
+# Run SLiM - SLIM_OUT_DIR, parameters, and SLIM_PARAM_FILE are set in
+# init_script_vars.sh
 # -----------------------------------------------------------------------------
 
-SLIM_PARAM_FILE=/home/${USER}/${PROJECT}/scripts/${STEP}/chrom_w_struct_and_evo.slim
+mkdir ${OUTPUT_DIR}/${SLIM_OUT_DIR}
 
-for m in 5e-07; do
-    for r in 1e-8; do
-        for p in 500; do
-            SLIM_OUT_DIR=slim_m${m}_r${r}_p${p}
-            start_logging "Run SLiM - ${SLIM_OUT_DIR}"
-            mkdir ${OUTPUT_DIR}/${SLIM_OUT_DIR}
+start_logging "Run SLiM - ${SLIM_OUT_DIR}"
 
-            # models chromosome with coding and non-coding regions
-            slim \
-                -d POP_SIZE=$p \
-                -d MUTATION_RATE=$m \
-                -d RECOMB_RATE=$r \
-                -d "OUT_PATH='${OUTPUT_DIR}/${SLIM_OUT_DIR}/'" \
-                ${SLIM_PARAM_FILE}
-        done
-    done
-done
+# models chromosome with coding and non-coding regions
+slim \
+    -d POP_SIZE=${POP_SIZE} \
+    -d MUTATION_RATE=${MUTATION_RATE} \
+    -d RECOMB_RATE=${RECOMB_RATE} \
+    -d "OUT_PATH='${OUTPUT_DIR}/${SLIM_OUT_DIR}/'" \
+    ${SLIM_PARAM_FILE}
 
 stop_logging
 
 # mail -s 'SLiM run finished - Starting BCFtools' ${EMAIL} <<<'SLiM run finished - Starting BCFtools'
 
 # -----------------------------------------------------------------------------
-# Format SLiM output for read simulation
+# Format SLiM output for read simulation - FILE_LABELS and SAMPLE_ID_LIST and
+# FASTA_OUT_DIR are set in init_script_vars.sh. FASTA_OUT_DIR is used as the
+# input directory in 02a_run_art.sh
 # -----------------------------------------------------------------------------
 
 module purge
@@ -77,68 +76,55 @@ module load bcftools/1.13
 
 start_logging "Format SLiM Output for read simulation - ${SLIM_OUT_DIR}"
 
-for m in 5e-07; do
-    for r in 1e-8; do
-        for p in 500; do
+VCF_OUT_DIR=${OUTPUT_DIR}/sample_vcf_files_${FILE_LABELS}
+mkdir ${VCF_OUT_DIR}
+VCF_FILE_LIST=${OUTPUT_DIR}/vcf_file_list_${FILE_LABELS}.txt
 
-            FASTA_OUT_DIR=sample_fasta_files_m${m}_r${r}_p${p}
-            VCF_OUT_DIR=sample_vcf_files_m${m}_r${r}_p${p}
+## Compress output VCF
+bgzip ${OUTPUT_DIR}/${SLIM_OUT_DIR}/final_pop.vcf
 
-            cd ${OUTPUT_DIR}/${SLIM_OUT_DIR}
+## Index compressed VCF
+tabix -f ${OUTPUT_DIR}/${SLIM_OUT_DIR}/final_pop.vcf.gz
 
-            ## Compress output VCF
-            bgzip final_pop.vcf
+## Split output VCF into sample-specific VCF files
 
-            ## Index compressed VCF
-            tabix final_pop.vcf.gz
+bcftools +split -O z -o ${VCF_OUT_DIR}/ ${OUTPUT_DIR}/${SLIM_OUT_DIR}/final_pop.vcf.gz
 
-            ## Split output VCF into sample-specific VCF files
-            cd ../
-            mkdir ${VCF_OUT_DIR}
-            bcftools +split -O z -o ${VCF_OUT_DIR}/ ./${SLIM_OUT_DIR}/final_pop.vcf.gz
+## Randomly select sample VCF files for conversation to FASTAs
+## >> Selecting 100, can be downsampled later
 
-            ## Randomly select sample VCF files for conversation to FASTAs
-            ## >> Selecting 100, can be downsampled later
-            cd ${VCF_OUT_DIR}/
+ls ${VCF_OUT_DIR} i*.vcf.gz | sort -R | tail -100 >${VCF_FILE_LIST}
+sed 's/.vcf.gz//g' ${VCF_FILE_LIST} >${SAMPLE_ID_LIST}
 
-            ls i*.vcf.gz | sort -R | tail -100 >../vcf_file_list_m${m}_r${r}_p${p}.txt
-            sed 's/.vcf.gz//g' ../vcf_file_list_m${m}_r${r}_p${p}.txt >../sample_id_list_m${m}_r${r}_p${p}.txt
+## Convert sample VCF files to two separate haplotype FASTAs per individual
 
-            ## Convert sample VCF files to two separate haplotype FASTAs per individual
-            cd ../
-            mkdir ${FASTA_OUT_DIR}
-            cd ${FASTA_OUT_DIR}/
+while read -a line; do
+    tabix ${VCF_OUT_DIR}/${line[0]}.vcf.gz
 
-            while read -a line; do
-                tabix ../${VCF_OUT_DIR}/${line[0]}.vcf.gz
+    bcftools norm --check-ref s \
+        --fasta-ref ${REF_GENOME_FILE} \
+        --multiallelics - \
+        --do-not-normalize \
+        --output ${VCF_OUT_DIR}/norm_${line[0]}.vcf \
+        /${VCF_OUT_DIR}/${line[0]}.vcf.gz
 
-                bcftools norm --check-ref s \
-                    --fasta-ref ../${SLIM_OUT_DIR}/ancestral.fasta \
-                    --multiallelics - \
-                    --do-not-normalize \
-                    --output ../${VCF_OUT_DIR}/norm_${line[0]}.vcf \
-                    ../${VCF_OUT_DIR}/${line[0]}.vcf.gz
+    bgzip ${VCF_OUT_DIR}/norm_${line[0]}.vcf
+    tabix ${VCF_OUT_DIR}/norm_${line[0]}.vcf.gz
 
-                bgzip ../${VCF_OUT_DIR}/norm_${line[0]}.vcf
-                tabix ../${VCF_OUT_DIR}/norm_${line[0]}.vcf.gz
+    bcftools +fixref ${VCF_OUT_DIR}/norm_${line[0]}.vcf.gz -- \
+        --fasta-ref ${REF_GENOME_FILE}
 
-                bcftools +fixref ../${VCF_OUT_DIR}/norm_${line[0]}.vcf.gz -- \
-                    --fasta-ref ../${SLIM_OUT_DIR}/ancestral.fasta
+    bcftools consensus --haplotype 1 \
+        --fasta-ref ${REF_GENOME_FILE} \
+        --output ${FASTA_OUT_DIR}/${line[0]}_1.fasta \
+        ${VCF_OUT_DIR}/norm_${line[0]}.vcf.gz
 
-                bcftools consensus --haplotype 1 \
-                    --fasta-ref ../${SLIM_OUT_DIR}/ancestral.fasta \
-                    --output ${line[0]}_1.fasta \
-                    ../${VCF_OUT_DIR}/norm_${line[0]}.vcf.gz
+    bcftools consensus --haplotype 2 \
+        --fasta-ref ${REF_GENOME_FILE} \
+        --output ${FASTA_OUT_DIR}/${line[0]}_2.fasta \
+        ${VCF_OUT_DIR}/norm_${line[0]}.vcf.gz
 
-                bcftools consensus --haplotype 2 \
-                    --fasta-ref ../${SLIM_OUT_DIR}/ancestral.fasta \
-                    --output ${line[0]}_2.fasta \
-                    ../${VCF_OUT_DIR}/norm_${line[0]}.vcf.gz
-
-            done <../sample_id_list_m${m}_r${r}_p${p}.txt
-        done
-    done
-done
+done <${SAMPLE_ID_LIST}
 
 stop_logging
 
