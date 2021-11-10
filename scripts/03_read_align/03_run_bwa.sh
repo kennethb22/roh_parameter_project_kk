@@ -21,48 +21,18 @@
 #    -- /input/ and /output/ subdirs within project dir
 
 # -----------------------------------------------------------------------------
-# Set Variables
+# Set variables for this step
 # -----------------------------------------------------------------------------
 
-## Load variables from settings file
-source /home/aubkbk001/roh_param_project/init_script_vars.sh
-
-## Set location of file contaning list of sample files to process
-SAMPLE_LIST_DIR=/scratch/aubkbk001_01_slim/
-SAMPLE_LIST_FILE_NAME=sample_id_list_m5e-07_r1e-8_p500.txt
-# SAMPLE_LIST_FILE_NAME=sample_cat_test.txt
-
-## Set location of output directory for unsorted bam files
-OUTPUT_DIR_UNSORTED=/scratch/${USER}_${PROJ}/output/unsorted_bam/
-
-## Set location of output directory for unsorted bam files
-OUTPUT_DIR_SORTED=/scratch/${USER}_${PROJ}/output/sorted_bam/
+STEP=03_read_align
+PREV_STEP=02_read_sim_and_qc
+SCRIPT=03_run_bwa.sh
 
 # -----------------------------------------------------------------------------
-# Create working directories
+# Load variables and functions from settings file
 # -----------------------------------------------------------------------------
 
-## Create a directory on /scratch
-mkdir /scratch/${USER}_${PROJ}/
-
-## Set permissions for directory
-chmod 700 /scratch/${USER}_${PROJ}/
-
-## cd into working scratch directory
-cd /scratch/${USER}_${PROJ}/
-
-## create output directory and subdirectories
-
-mkdir output
-chmod 700 output
-mkdir ./output/sorted_bam
-chmod 700 ./output/sorted_bam
-mkdir ./output/unsorted_bam
-chmod 700 ./output/unsorted_bam
-
-## create input directory
-mkdir input
-chmod 700 input
+source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
 
 # -----------------------------------------------------------------------------
 # Load Modules
@@ -81,18 +51,40 @@ bwa index ${REF_GENOME_FILE}
 # Align reads to reference genome
 # -----------------------------------------------------------------------------
 
+cd ${OUTPUT_DIR}
+
 while read -a line; do
+
+    OUT_FILE=${line[0]}_genome.bam
+    start_logging "bwa align - ${OUT_FILE}"
+
     bwa mem -t 20 -M \
         ${REF_GENOME_FILE} \
-        ./input/${line[0]}_f.fq ./input/${line[0]}_r.fq >${OUTPUT_DIR_UNSORTED}${line[0]}_genome.bam
-done <${SAMPLE_LIST_DIR}${SAMPLE_LIST_FILE_NAME}
+        ${INPUT_DIR}/${line[0]}_f.fq ${INPUT_DIR}/${line[0]}_r.fq >${OUT_FILE}
+
+    stop_logging
+
+done <${SAMPLE_ID_LIST}
 
 # -----------------------------------------------------------------------------
 # Sort aligned read bam files
 # -----------------------------------------------------------------------------
 
 while read -a line; do
+
+    OUT_FILE=${line[0]}_genome_sorted.bam
+    start_logging "samtools sort - ${OUT_FILE}"
+
     samtools sort -@ 19 \
-        -o ${OUTPUT_DIR_SORTED}${line[0]}_genome_sorted.bam \
-        ${OUTPUT_DIR_UNSORTED}${line[0]}_genome.bam
-done <${SAMPLE_LIST_DIR}${SAMPLE_LIST_FILE_NAME}
+        -o ${OUT_FILE} \
+        ${line[0]}_genome.bam
+
+    stop_logging
+
+done <${SAMPLE_ID_LIST}
+
+# -----------------------------------------------------------------------------
+# Copy output files to user's home directory.
+# -----------------------------------------------------------------------------
+
+source /home/aubkbk001/roh_param_project/scripts/99_includes/backup_output.sh

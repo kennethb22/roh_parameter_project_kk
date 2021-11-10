@@ -20,51 +20,43 @@
 #    -- project directory (of same name as script) in /home/
 #    -- /input/ and /output/ subdirs within project dir
 
-##  Set username
-USER=aubkbk001
+# -----------------------------------------------------------------------------
+# Set variables for this step
+# -----------------------------------------------------------------------------
 
-## Set project name
-PROJ=02_read_sim_and_qc
+STEP=02_read_sim_and_qc
+PREV_STEP=01_run_slim
+SCRIPT=02c_fastqc.sh
 
-## Set directory where list of sample files is stored
-LIST_DIR=/scratch/aubkbk001_01_slim/
+# -----------------------------------------------------------------------------
+# Load variables and functions from settings file
+# -----------------------------------------------------------------------------
 
-## Set file name of file where list of sample files is stored
-LIST_FILE_NAME=sample_id_list_m5e-07_r1e-8_p500.txt
+source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
 
-## Set input directory where fastq files to concatenate are stored
-INPUT_DIR=/scratch/${USER}_${PROJ}/output_sim_fastq_files_concat/
-
-## Set output directory - where to save concatenated fastq files
-OUTPUT_DIR_NAME=output_rawread_fastqc
-OUTPUT_DIR=/scratch/${USER}_${PROJ}/${OUTPUT_DIR_NAME}/
-
-# Assume project directory has already been created
-# /scratch/${USER}_${PROJ}/
-
-# cd to project directory
-cd /scratch/${USER}_${PROJ}/
-
-# create directory to save concatenated fastq files
-mkdir ${OUTPUT_DIR_NAME}
-chmod 700 ${OUTPUT_DIR_NAME}
-
-# ## cd into directory with concatenated fastq files from art
-cd ${INPUT_DIR}
+# Create directory to save fastqc reports
+cd ${OUTPUT_DIR}
+cd ..
+FASTQC_OUT_DIR=fastqc_reports
+mkdir ${FASTQC_OUT_DIR}
 
 ## --------------------------------
-## Load modules 
+## Load modules
 # module load trimmomatic/0.38
 module load fastqc/0.11.9
 
 ## Run fastqc on 2 read files per sample
 
-while read -a line
-do
-	fastqc -t 5 -o ${OUTPUT_DIR} \
-	${line[0]}_f.fq \
-	${line[0]}_r.fq 
+while read -a line; do
 
-done < ${LIST_DIR}${LIST_FILE_NAME}
+    start_logging "fastqc - ${line[0]}"
 
- mail -s 'FASTQC run finished' kirkseykb1@appstate.edu <<< 'FASTQC run finished'
+    fastqc -t 5 -o ./${FASTQC_OUT_DIR} \
+        ${OUTPUT_DIR}/${line[0]}_f.fq \
+        ${OUTPUT_DIR}/${line[0]}_r.fq
+
+    stop_logging
+
+done <${SAMPLE_ID_LIST}
+
+# mail -s 'FASTQC run finished' kirkseykb1@appstate.edu <<<'FASTQC run finished'

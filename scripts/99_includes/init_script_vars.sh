@@ -59,13 +59,13 @@ POP_SIZE=500
 
 # directory and file paths
 
-INIT_OUTPUT_DIR=/scratch/${USER}/${PROJECT}/data/${INIT_STEP}/output
-
 FILE_LABELS=m${MUTATION_RATE}_r${RECOMB_RATE}_p${POP_SIZE}
 
 SLIM_OUT_DIR=slim_${FILE_LABELS}
 
 SLIM_PARAM_FILE=/home/${USER}/${PROJECT}/scripts/${STEP}/chrom_w_struct_and_evo.slim
+
+INIT_OUTPUT_DIR=/scratch/${USER}/${PROJECT}/data/${INIT_STEP}/output
 
 REF_GENOME_FILE_PATH=${INIT_OUTPUT_DIR}/${SLIM_OUT_DIR}
 

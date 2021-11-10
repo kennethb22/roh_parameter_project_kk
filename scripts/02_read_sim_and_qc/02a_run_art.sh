@@ -75,4 +75,10 @@ while read -a line; do
 
 done <${SAMPLE_ID_LIST}
 
-mail -s 'ART run finished' kirkseykb1@appstate.edu <<<'SLiM run finished'
+# mail -s 'ART run finished' kirkseykb1@appstate.edu <<<'SLiM run finished'
+
+# -----------------------------------------------------------------------------
+# Copy output files to user's home directory.
+# -----------------------------------------------------------------------------
+
+source /home/aubkbk001/roh_param_project/scripts/99_includes/backup_output.sh
