@@ -120,33 +120,33 @@ for population in ${popN[@]}; do
 
         stop_logging
 
-        # # ----------------------------------------------------------------------
-        # # ROH Calling - Using Genotypes and genotype liklihoods
-        # # ----------------------------------------------------------------------
+        # ----------------------------------------------------------------------
+        # ROH Calling - Using Genotypes and genotype liklihoods
+        # ----------------------------------------------------------------------
 
-        # IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_final_SNPs.vcf
-        # OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_pl.txt
-        # AF_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_filteredSNPs.tab.gz
+        IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_final_SNPs.vcf
+        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_pl.txt
+        AF_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_filteredSNPs.tab.gz
 
-        # start_logging "bcftools roh pl - ${OUT_FILE}"
+        start_logging "bcftools roh pl - ${OUT_FILE}"
 
-        # bcftools roh \
-        #     --threads 20 \
-        #     -o ${OUTPUT_DIR}/${OUT_FILE} \
-        #     --AF-file ${OUTPUT_DIR}/${AF_FILE} \
-        #     ${INPUT_DIR}/${IN_FILE}
+        bcftools roh \
+            --threads 20 \
+            -o ${OUTPUT_DIR}/${OUT_FILE} \
+            --AF-file ${OUTPUT_DIR}/${AF_FILE} \
+            ${INPUT_DIR}/${IN_FILE}
 
-        # # ----------------------------------------------------------------------
-        # # Extract information on ROHS i.e., exlcude information on individual
-        # # sites
-        # # ----------------------------------------------------------------------
+        # ----------------------------------------------------------------------
+        # Extract information on ROHS i.e., exlcude information on individual
+        # sites
+        # ----------------------------------------------------------------------
 
-        # IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_pl.txt
-        # OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_pl_RG_ONLY.txt
-        # grep "^RG" ${OUTPUT_DIR}/${IN_FILE} > \
-        #     ${OUTPUT_DIR}/${OUT_FILE}
+        IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_pl.txt
+        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_pl_RG_ONLY.txt
+        grep "^RG" ${OUTPUT_DIR}/${IN_FILE} > \
+            ${OUTPUT_DIR}/${OUT_FILE}
 
-        # stop_logging
+        stop_logging
 
     done
 
