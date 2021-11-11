@@ -93,12 +93,12 @@ mkdir ${FASTA_OUT_DIR}
 ## Coverage level in NNx for display in output file names
 # declare -a cvgX=(50x 30x 15x 10x 05x)
 # declare -a cvgX=(50x 30x)
-declare -a cvgX=(05x)
+declare -a cvgX=(15x)
 
 ## Coverage level fraction to supply to samtools
 # declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
 # declare -a cvgP=(1.0 0.6)
-declare -a cvgP=(0.1)
+declare -a cvgP=(0.3)
 
 ## Get length of the coverage level arrays. Subtract 1 because arrays are zero
 ## based, and we'll iterate over the arrays from 0 to cvgCnt
@@ -107,7 +107,7 @@ let cvgCnt-=1
 
 ## Create array of population sizes we want to test
 # declare -a popN=(100 50 30)
-declare -a popN=(03)
+declare -a popN=(30)
 # declare -a popN=(01)
 
 # -----------------------------------------------------------------------------
@@ -132,10 +132,11 @@ declare -a phzk=(10)        # Values for -homozyg-kb
 
 LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_log.txt
 
-# Delete log file if it exists
+# If log file exists, save a copy.
 
 if [ -f "$LOG_FILE" ]; then
-    rm ${LOG_FILE}
+    TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
+    mv ${LOG_FILE} ${OUTPUT_DIR}/${SCRIPT}_log_${TIMESTAMP}.txt
 fi
 
 # Write header to log file

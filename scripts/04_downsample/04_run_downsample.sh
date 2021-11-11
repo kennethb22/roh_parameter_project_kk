@@ -53,7 +53,7 @@ for population in ${popN[@]}; do
 
     cd ${INPUT_DIR}
 
-    ls i*.bam | sort -R | tail -${population} >../sample_list.txt
+    ls i*_sorted.bam | sort -R | tail -${population} >../sample_list.txt
     sed 's/_genome_sorted.bam//g' ../sample_list.txt >${OUTPUT_DIR}/sample_id_list_pop_${population}.txt
     rm ../sample_list.txt
 
@@ -71,9 +71,15 @@ for population in ${popN[@]}; do
         # Downsample each individual
 
         while read -a line; do
+
+            OUT_FILE=${line[0]}_pop_${population}_cvg_${cvgX[i]}.bam
+            start_logging "samtools view - ${OUT_FILE}"
+
             samtools view -s ${cvgP[i]} -@ 19 \
-                -o ${POP_CVG_OUTPUT_DIR}/${line[0]}_pop_${population}_cvg_${cvgX[i]}.bam \
+                -o ${POP_CVG_OUTPUT_DIR}/${OUT_FILE} \
                 ${INPUT_DIR}/${line[0]}_genome_sorted.bam
+
+            stop_logging
 
         done <${OUTPUT_DIR}/sample_id_list_pop_${population}.txt
     done
