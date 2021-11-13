@@ -93,12 +93,12 @@ mkdir ${FASTA_OUT_DIR}
 ## Coverage level in NNx for display in output file names
 # declare -a cvgX=(50x 30x 15x 10x 05x)
 # declare -a cvgX=(50x 30x)
-declare -a cvgX=(15x)
+declare -a cvgX=(10x 05x)
 
 ## Coverage level fraction to supply to samtools
 # declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
 # declare -a cvgP=(1.0 0.6)
-declare -a cvgP=(0.3)
+declare -a cvgP=(0.2 0.1)
 
 ## Get length of the coverage level arrays. Subtract 1 because arrays are zero
 ## based, and we'll iterate over the arrays from 0 to cvgCnt
@@ -107,7 +107,7 @@ let cvgCnt-=1
 
 ## Create array of population sizes we want to test
 # declare -a popN=(100 50 30)
-declare -a popN=(30)
+declare -a popN=(3 2)
 # declare -a popN=(01)
 
 # -----------------------------------------------------------------------------
