@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#  +-----------------+
-#  | REQUIRES 20 CPU |
-#  +-----------------+
+#  +----------------------+
+#  | REQUEST 4 CPU + 60gb |
+#  +----------------------+
 #
 #  Replace the USER name in this script with your username and
 #  call your project whatever you want
@@ -35,22 +35,26 @@ source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
 module load bcftools/1.10.2
 module load samtools/1.11
 
-# -----------------------------------------------------------------------------
-# Create log file
-# -----------------------------------------------------------------------------
+## Create arrays of downsample levels to be used.
+## Coverage level in NNx for display in output file names
+# declare -a cvgX=(50x 30x 15x 10x 05x)
+# declare -a cvgX=(50x 30x)
+declare -a cvgX=(05x)
 
-# Set name of log file to track execution times
-LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_log.txt
+## Coverage level fraction to supply to samtools
+# declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
+# declare -a cvgP=(1.0 0.6)
+declare -a cvgP=(0.1)
 
-# Delete log file if it exists
+## Get length of the coverage level arrays. Subtract 1 because arrays are zero
+## based, and we'll iterate over the arrays from 0 to cvgCnt
+cvgCnt=${#cvgX[@]}
+let cvgCnt-=1
 
-if [ -f "$LOG_FILE" ]; then
-    rm ${LOG_FILE}
-fi
-
-# Write header to log file
-
-printf "%-80s   %8s   %8s   %8s\n" "Action - Output" "Start" "End" "Duration" >>${LOG_FILE}
+## Create array of population sizes we want to test
+# declare -a popN=(100 50 30)
+declare -a popN=(100 50 30)
+# declare -a popN=(01)
 
 # -----------------------------------------------------------------------------
 # Process final filtered SNPs
@@ -71,7 +75,7 @@ for population in ${popN[@]}; do
 
         ## Set action and start time for log
 
-        IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_final_SNPs.vcf
+        IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_filtered_SNPs.vcf
         OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_filteredSNPs.tab.gz
 
         start_logging "bcftools query/tabix  - ${OUT_FILE}"
@@ -89,23 +93,17 @@ for population in ${popN[@]}; do
         # ROH Calling - Using Genotypes only
         # ----------------------------------------------------------------------
 
-        IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_final_SNPs.vcf
+        IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_filtered_SNPs.vcf
         OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_gt.txt
         AF_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_filteredSNPs.tab.gz
 
         start_logging "bcftools roh gt - ${OUT_FILE}"
 
-        # bcftools roh \
-        #     --GTs-only 30 \
-        #     --threads 20 \
-        #     -o ${OUTPUT_DIR}/${OUT_FILE} \
-        #     --AF-file ${OUTPUT_DIR}/${AF_FILE} \
-        #     ${INPUT_DIR}/${IN_FILE}
-
         bcftools roh \
             --GTs-only 30 \
-            --AF-dflt 0.4 \
+            --threads 20 \
             -o ${OUTPUT_DIR}/${OUT_FILE} \
+            --AF-file ${OUTPUT_DIR}/${AF_FILE} \
             ${INPUT_DIR}/${IN_FILE}
 
         # ----------------------------------------------------------------------
@@ -124,7 +122,7 @@ for population in ${popN[@]}; do
         # ROH Calling - Using Genotypes and genotype liklihoods
         # ----------------------------------------------------------------------
 
-        IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_final_SNPs.vcf
+        IN_FILE=sample_pop_${population}_cvg_${cvgX[i]}_filtered_SNPs.vcf
         OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_roh_pl.txt
         AF_FILE=sample_pop_${population}_cvg_${cvgX[i]}_bcftools_filteredSNPs.tab.gz
 

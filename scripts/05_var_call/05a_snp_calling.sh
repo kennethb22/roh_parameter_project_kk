@@ -17,6 +17,17 @@
 #  Submit this script to the queue with a command like this
 #    run_script_scratch my_script.sh
 #
+#  In user home directory, make a backup of the .asc_queue file and replace it
+#  with .asc_queue_gatk_hc file before running haplotype calling. The .asc_queue
+#  file sets the default parameters used by run_script.
+#
+#  This script submits one queue job for each each file on which gatk Haplotype
+#  Caller is run, and in order for it to work it depends on the values in
+#  .asc_queue being set to the values saved in .asc_queue_gatk_hc. Restore the
+#  original .asc_queue file after running this script.
+#
+#  TO DO:  Split this script into two separate scripts: one for add read group
+#          information and one for haplotype calling.
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
@@ -129,7 +140,8 @@ for i in $(seq 0 $cvgCnt); do
 
         run_script ${SCRIPT_FILE}
 
-        stop_logging
+        sleep 10
+        # stop_logging
 
     done <${SAMPLE_ID_LIST}
 done

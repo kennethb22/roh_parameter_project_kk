@@ -130,19 +130,38 @@ declare -a phzk=(10)        # Values for -homozyg-kb
 
 # Set name of log file to track execution times
 
-LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_log.txt
+TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
+LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_${TIMESTAMP}_log.txt
 
-# If log file exists, save a copy.
+# # If log file exists, save a copy.
 
-if [ -f "$LOG_FILE" ]; then
-    TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
-    mv ${LOG_FILE} ${OUTPUT_DIR}/${SCRIPT}_log_${TIMESTAMP}.txt
-fi
+# if [ -f "$LOG_FILE" ]; then
+#     TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
+#     mv ${LOG_FILE} ${OUTPUT_DIR}/${SCRIPT}_log_${TIMESTAMP}.txt
+# fi
 
 # Write header to log file
 
 printf "%-80s   %8s   %8s   %8s\n" "Action - Output" "Start" "End" "Duration" >${LOG_FILE}
 
+# Set name of log file to track execution times
+
+create_log_file() {
+    TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
+    LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_$1_${TIMESTAMP}_log.txt
+
+    # # If log file exists, save a copy.
+
+    # if [ -f "$LOG_FILE" ]; then
+    #     TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
+    #     mv ${LOG_FILE} ${OUTPUT_DIR}/${SCRIPT}_log_${TIMESTAMP}.txt
+    # fi
+
+    # Write header to log file
+
+    printf "%-80s   %8s   %8s   %8s\n" "Action - Output" "Start" "End" "Duration" >${LOG_FILE}
+
+}
 # -----------------------------------------------------------------------------
 # Define Functions
 # -----------------------------------------------------------------------------

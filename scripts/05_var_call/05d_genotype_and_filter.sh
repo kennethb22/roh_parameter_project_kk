@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #  +----------------------+
-#  | REQUEST 4 CPU + 60gb |
+#  | Small queue:  REQUEST 2 CPU + 60 gb |
 #  +----------------------+
 #
 #  Replace the USER name in this script with your username and
@@ -13,6 +13,21 @@
 #  Submit this script to the queue with a command like this
 #    run_script_scratch my_script.sh
 #
+#  I ran each combination of population and coverage as separate jobs.
+#
+#  To do - modify script to create scripts to run for each population/coverage
+#  combination
+#
+#  NOTES:
+#
+#  2021-11-14 - 05d_genotype_and_filter_p100_10x completed but did't
+#    produce filtered.vcf output file. Checked job output log, execution just
+#    stopped during the CombineVCFS step. I think that happened because I had
+#    exceeded my disk quota. Scripts were making a new backup of the output
+#    directory from scratch for every copy of 05d being run. Filled up quota
+#    quickly. Disabling backup code in the script. Will manually backup of
+#    output directory from scratch to home after all 05d scripts finish.
+#
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
@@ -20,7 +35,7 @@
 
 STEP=05_var_call
 PREV_STEP=04_downsample
-SCRIPT=05d_genotype_and_filter
+SCRIPT=$(echo "$(echo "$0" | sed -e "s/^\.\///")" | sed -e "s/\.sh//")
 
 # -----------------------------------------------------------------------------
 # Load variables and functions from settings file
@@ -41,12 +56,10 @@ module load gatk/4.1.4.0
 ## Create arrays of downsample levels to be used.
 ## Coverage level in NNx for display in output file names
 # declare -a cvgX=(50x 30x 15x 10x 05x)
-# declare -a cvgX=(50x 30x)
-declare -a cvgX=(05x 10x)
+declare -a cvgX=(10x)
 
 ## Coverage level fraction to supply to samtools
 # declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
-# declare -a cvgP=(1.0 0.6)
 declare -a cvgP=(0.1)
 
 ## Get length of the coverage level arrays. Subtract 1 because arrays are zero
@@ -56,8 +69,7 @@ let cvgCnt-=1
 
 ## Create array of population sizes we want to test
 # declare -a popN=(100 50 30)
-declare -a popN=(100 50 30)
-# declare -a popN=(01)
+declare -a popN=(30)
 
 # Iterate over each combination of population and coverage level. Sets of
 # population and coverage are set in init_script_vars.sh
@@ -77,9 +89,10 @@ for population in ${popN[@]}; do
         # gatk Gombine GVCFS
         # ----------------------------------------------------------------------
 
-        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_combined_gcvfs.vcf
+        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_combined_gvcfs.vcf
         COMBINED_GVCFS_FILE=${OUT_FILE}
 
+        # create_log_file "pop_${population}_cvg_${cvgX[i]}"
         start_logging "gatk CombineGVCFS - ${OUT_FILE}"
 
         # Do GenomicsDBImport
@@ -95,12 +108,12 @@ for population in ${popN[@]}; do
         # gatk GenotypeGVCFs
         # ----------------------------------------------------------------------
 
-        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_genotyped_gcvfs.vcf
+        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_genotyped_gvcfs.vcf
         GENOTYPED_FILE=${OUT_FILE}
 
-        start_logging "gatk GenotypeGCVFS - ${OUT_FILE}"
+        start_logging "gatk Genotypegvcfs - ${OUT_FILE}"
 
-        # Do GenotypeGCVFs
+        # Do Genotypegvcfs
 
         gatk GenotypeGVCFs \
             -R ${REF_GENOME_FILE} \
@@ -113,7 +126,7 @@ for population in ${popN[@]}; do
         # Flag Variants that do not pass filters
         # ----------------------------------------------------------------------
 
-        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_filtered_gcvfs.vcf
+        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_filtered_gvcfs.vcf
         FILTERED_FILE=${OUT_FILE}
 
         start_logging "gatk VariantFiltration- ${OUT_FILE}"
