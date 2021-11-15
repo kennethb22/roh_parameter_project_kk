@@ -56,11 +56,11 @@ source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
 ## Create arrays of downsample levels to be used.
 ## Coverage level in NNx for display in output file names
 # declare -a cvgX=(50x 30x 15x 10x 05x)
-declare -a cvgX=(15x)
+declare -a cvgX=(50x 30x 15x 10x)
 
 ## Coverage level fraction to supply to samtools
 # declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
-declare -a cvgP=(0.1)
+declare -a cvgP=(1.0 0.6 0.2 0.1)
 
 ## Get length of the coverage level arrays. Subtract 1 because arrays are zero
 ## based, and we'll iterate over the arrays from 0 to cvgCnt
@@ -89,7 +89,7 @@ for population in ${popN[@]}; do
         # gatk Gombine GVCFS
         # ----------------------------------------------------------------------
 
-        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_combined_gvcfs.vcf
+        # OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_combined_gvcfs.vcf
         COMBINED_GVCFS_FILE=${OUT_FILE}
 
         # create_log_file "pop_${population}_cvg_${cvgX[i]}"
@@ -106,21 +106,22 @@ for population in ${popN[@]}; do
 
         # Create script for each pop_xx_cvg_xx group
 
-        SCRIPT_FILE=05d_gtyp_p${population}_cvg_${cvgX[i]}.sh
+        # SCRIPT_FILE=05d_gtyp_p${population}_c_${cvgX[i]}.sh
+        SCRIPT_FILE=05d_fltr_p${population}_c_${cvgX[i]}.sh
 
-        echo "ref " $REF_GENOME_FILE
-        echo "map " $MAP_FILE
+        # echo "ref " $REF_GENOME_FILE
+        # echo "map " $MAP_FILE
 
         echo '#!/bin/bash' >${SCRIPT_FILE}
         echo 'module load gatk/4.1.4.0' >>${SCRIPT_FILE}
-        printf "\n\n" >>${SCRIPT_FILE}
-        echo 'gatk CombineGVCFs \' >>${SCRIPT_FILE}
-        printf "%s %s \\" "-R" ${REF_GENOME_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-        printf "%s %s \\" "-V" ${MAP_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-        printf "%s %s/%s" "-O" ${OUTPUT_DIR} ${OUT_FILE} >>${SCRIPT_FILE}
-        printf "\n\n" >>${SCRIPT_FILE}
+        # printf "\n\n" >>${SCRIPT_FILE}
+        # echo 'gatk CombineGVCFs \' >>${SCRIPT_FILE}
+        # printf "%s %s \\" "-R" ${REF_GENOME_FILE} >>${SCRIPT_FILE}
+        # printf "\n" >>${SCRIPT_FILE}
+        # printf "%s %s \\" "-V" ${MAP_FILE} >>${SCRIPT_FILE}
+        # printf "\n" >>${SCRIPT_FILE}
+        # printf "%s %s/%s" "-O" ${OUTPUT_DIR} ${OUT_FILE} >>${SCRIPT_FILE}
+        # printf "\n\n" >>${SCRIPT_FILE}
 
         # ----------------------------------------------------------------------
         # gatk GenotypeGVCFs
@@ -140,13 +141,13 @@ for population in ${popN[@]}; do
 
         # stop_logging
 
-        echo 'gatk GenotypeGVCFs \' >>${SCRIPT_FILE}
-        printf "%s %s \\" "-R" ${REF_GENOME_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-        printf "%s %s/%s \\" "-V" ${OUTPUT_DIR} ${COMBINED_GVCFS_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-        printf "%s %s/%s" "-O" ${OUTPUT_DIR} ${OUT_FILE} >>${SCRIPT_FILE}
-        printf "\n\n" >>${SCRIPT_FILE}
+        # echo 'gatk GenotypeGVCFs \' >>${SCRIPT_FILE}
+        # printf "%s %s \\" "-R" ${REF_GENOME_FILE} >>${SCRIPT_FILE}
+        # printf "\n" >>${SCRIPT_FILE}
+        # printf "%s %s/%s \\" "-V" ${OUTPUT_DIR} ${COMBINED_GVCFS_FILE} >>${SCRIPT_FILE}
+        # printf "\n" >>${SCRIPT_FILE}
+        # printf "%s %s/%s" "-O" ${OUTPUT_DIR} ${OUT_FILE} >>${SCRIPT_FILE}
+        # printf "\n\n" >>${SCRIPT_FILE}
 
         # ----------------------------------------------------------------------
         # Flag Variants that do not pass filters
@@ -176,7 +177,7 @@ for population in ${popN[@]}; do
         #     --filter-name "ReadPosRankSum" \
         #     --filter-expression "ReadPosRankSum < -8.0"
 
-        echo 'gatk GenotypeGVCFs \' >>${SCRIPT_FILE}
+        echo 'gatk VariantFiltration \' >>${SCRIPT_FILE}
         printf "%s %s \\" "-R" ${REF_GENOME_FILE} >>${SCRIPT_FILE}
         printf "\n" >>${SCRIPT_FILE}
         printf "%s %s/%s \\" "-V" ${OUTPUT_DIR} ${GENOTYPED_FILE} >>${SCRIPT_FILE}
@@ -195,7 +196,7 @@ for population in ${popN[@]}; do
         printf "\n" >>${SCRIPT_FILE}
         printf '%s \"%s\" \\' "--filter-expression" "SOR > 5.0" >>${SCRIPT_FILE}
         printf "\n" >>${SCRIPT_FILE}
-        printf '%s \"%s\" \\' "--filter-name" "MQ" >>${SCRIPT_FILE}
+        printf '%s \"%s\" \\' "--filter-name" "MQRankSum" >>${SCRIPT_FILE}
         printf "\n" >>${SCRIPT_FILE}
         printf '%s \"%s\" \\' "--filter-expression" "MQ < 20.0" >>${SCRIPT_FILE}
         printf "\n" >>${SCRIPT_FILE}
