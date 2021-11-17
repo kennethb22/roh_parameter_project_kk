@@ -26,7 +26,7 @@
 
 STEP=04_downsample
 PREV_STEP=03_read_align
-SCRIPT=04_run_downsample.sh
+SCRIPT=$(echo "$(echo "$0" | sed -e "s/^\.\///")" | sed -e "s/\.sh//")
 
 # -----------------------------------------------------------------------------
 # Load variables and functions from settings file

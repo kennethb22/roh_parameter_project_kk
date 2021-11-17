@@ -38,7 +38,7 @@ module load anaconda/3-2020.11
 ## Coverage level in NNx for display in output file names
 # declare -a cvgX=(50x 30x 15x 10x 05x)
 # declare -a cvgX=(50x 30x)
-declare -a cvgX=(50x 30x 15x 10x 05x)
+declare -a cvgX=(30x)
 
 ## Coverage level fraction to supply to samtools
 # declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
