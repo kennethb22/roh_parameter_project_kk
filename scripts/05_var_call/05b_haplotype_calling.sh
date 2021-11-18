@@ -25,9 +25,16 @@
 #  Caller is run, and in order for it to work it depends on the values in
 #  .asc_queue being set to the values saved in .asc_queue_gatk_hc. Restore the
 #  original .asc_queue file after running this script.
+
 #
-#  TO DO:  Split this script into two separate scripts: one for add read group
-#          information and one for haplotype calling.
+#  NOTE: After all of the scripts finish running, check the output directories -
+#        sample_cvg_XX and make sure they have the expected number of files.
+#        Sometimes one or two samples don't get processed. If there are fewer
+#        files than expected, compare the list of files with the list of
+#        samples in SAMPLE_ID_LIST to determine which samples are missing. Then
+#        re-run the matching 05d_gtyp_pXX_c_YYx.sh script in 05_var_call
+#        scripts directory.
+#
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
@@ -74,7 +81,7 @@ for i in $(seq 0 $cvgCnt); do
 
         OUT_FILE=${line[0]}_cvg_${cvgX[i]}.g.vcf
         RGROUPS_FILE=${line[0]}_cvg_${cvgX[i]}_rgroups.bam
-
+        sque
         start_logging "gatk Haplotype Caller - ${OUT_FILE}"
 
         # Run gatk HaplotypeCaller

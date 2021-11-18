@@ -26,7 +26,7 @@
 
 STEP=04_downsample
 PREV_STEP=03_read_align
-SCRIPT=04-2_run_downsample.sh
+SCRIPT=$(echo "$(echo "$0" | sed -e "s/^\.\///")" | sed -e "s/\.sh//")
 
 # -----------------------------------------------------------------------------
 # Load variables and functions from settings file
@@ -43,27 +43,46 @@ module load samtools/1.11
 # Do the downsampling.
 # -----------------------------------------------------------------------------
 
-for i in $(seq 0 $cvgCnt); do
+# Create subsets of various sizes of the initial sample population
+# for population in 100 50 30
 
-    # Create output directory for each coverage level.
+for population in ${popN[@]}; do
 
-    CVG_OUTPUT_DIR=${OUTPUT_DIR}/sample_cvg_${cvgX[i]}
-    mkdir ${CVG_OUTPUT_DIR}
+    # Randomly choose n individuals from original population. Save list of
+    # individuals to a text file
 
-    # Downsample each individual
+    cd ${INPUT_DIR}
 
-    while read -a line; do
+    ls i*_sorted.bam | sort -R | tail -${population} >../sample_list.txt
+    sed 's/_genome_sorted.bam//g' ../sample_list.txt >${OUTPUT_DIR}/sample_id_list_pop_${population}.txt
+    rm ../sample_list.txt
 
-        OUT_FILE=${line[0]}_cvg_${cvgX[i]}.bam
-        start_logging "samtools view - ${OUT_FILE}"
+    # Downsample each individual in the population to the specified levels of
+    # coverage
 
-        samtools view -s ${cvgP[i]} -@ 10 \
-            -o ${CVG_OUTPUT_DIR}/${OUT_FILE} \
-            ${INPUT_DIR}/${line[0]}_genome_sorted.bam
+    for i in $(seq 0 $cvgCnt); do
 
-        stop_logging
+        # Create output directory for each population size and coverage level
+        # combination.
 
-    done <${SAMPLE_ID_LIST}
+        POP_CVG_OUTPUT_DIR=${OUTPUT_DIR}/sample_pop_${population}_cvg_${cvgX[i]}
+        mkdir ${POP_CVG_OUTPUT_DIR}
+
+        # Downsample each individual
+
+        while read -a line; do
+
+            OUT_FILE=${line[0]}_pop_${population}_cvg_${cvgX[i]}.bam
+            start_logging "samtools view - ${OUT_FILE}"
+
+            samtools view -s ${cvgP[i]} -@ 19 \
+                -o ${POP_CVG_OUTPUT_DIR}/${OUT_FILE} \
+                ${INPUT_DIR}/${line[0]}_genome_sorted.bam
+
+            stop_logging
+
+        done <${OUTPUT_DIR}/sample_id_list_pop_${population}.txt
+    done
 done
 
 # -----------------------------------------------------------------------------

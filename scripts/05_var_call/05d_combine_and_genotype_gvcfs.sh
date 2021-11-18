@@ -47,7 +47,7 @@ source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
 # Load Modules
 # -----------------------------------------------------------------------------
 
-# module load gatk/4.1.4.0
+module load gatk/4.1.4.0
 
 # -----------------------------------------------------------------------------
 # Genotype GVCFs across all samples simultaneously
@@ -56,11 +56,9 @@ source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
 ## Create arrays of downsample levels to be used.
 ## Coverage level in NNx for display in output file names
 # declare -a cvgX=(50x 30x 15x 10x 05x)
-declare -a cvgX=(30x)
-
+declare -a cvgX=(05x)
 ## Coverage level fraction to supply to samtools
-# declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
-declare -a cvgP=(0.6)
+declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
 
 ## Get length of the coverage level arrays. Subtract 1 because arrays are zero
 ## based, and we'll iterate over the arrays from 0 to cvgCnt
@@ -126,7 +124,7 @@ for population in ${popN[@]}; do
 
 done
 
-sleep 10
+# sleep 10
 # -----------------------------------------------------------------------------
 # Copy output files to user's home directory.
 # -----------------------------------------------------------------------------

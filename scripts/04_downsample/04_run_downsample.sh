@@ -34,6 +34,18 @@ SCRIPT=$(echo "$(echo "$0" | sed -e "s/^\.\///")" | sed -e "s/\.sh//")
 
 source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
 
+## Create arrays of downsample levels to be used.
+## Coverage level in NNx for display in output file names
+declare -a cvgX=(50x 30x 15x 10x 05x)
+
+## Coverage level fraction to supply to samtools
+declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
+
+## Get length of the coverage level arrays. Subtract 1 because arrays are zero
+## based, and we'll iterate over the arrays from 0 to cvgCnt
+cvgCnt=${#cvgX[@]}
+let cvgCnt-=1
+
 # -----------------------------------------------------------------------------
 # Load modules
 # -----------------------------------------------------------------------------
@@ -43,46 +55,27 @@ module load samtools/1.11
 # Do the downsampling.
 # -----------------------------------------------------------------------------
 
-# Create subsets of various sizes of the initial sample population
-# for population in 100 50 30
+for i in $(seq 0 $cvgCnt); do
 
-for population in ${popN[@]}; do
+    # Create output directory for each coverage level.
 
-    # Randomly choose n individuals from original population. Save list of
-    # individuals to a text file
+    CVG_OUTPUT_DIR=${OUTPUT_DIR}/sample_cvg_${cvgX[i]}
+    mkdir ${CVG_OUTPUT_DIR}
 
-    cd ${INPUT_DIR}
+    # Downsample each individual
 
-    ls i*_sorted.bam | sort -R | tail -${population} >../sample_list.txt
-    sed 's/_genome_sorted.bam//g' ../sample_list.txt >${OUTPUT_DIR}/sample_id_list_pop_${population}.txt
-    rm ../sample_list.txt
+    while read -a line; do
 
-    # Downsample each individual in the population to the specified levels of
-    # coverage
+        OUT_FILE=${line[0]}_cvg_${cvgX[i]}.bam
+        start_logging "samtools view - ${OUT_FILE}"
 
-    for i in $(seq 0 $cvgCnt); do
+        samtools view -s ${cvgP[i]} -@ 19 \
+            -o ${CVG_OUTPUT_DIR}/${OUT_FILE} \
+            ${INPUT_DIR}/${line[0]}_genome_sorted.bam
 
-        # Create output directory for each population size and coverage level
-        # combination.
+        stop_logging
 
-        POP_CVG_OUTPUT_DIR=${OUTPUT_DIR}/sample_pop_${population}_cvg_${cvgX[i]}
-        mkdir ${POP_CVG_OUTPUT_DIR}
-
-        # Downsample each individual
-
-        while read -a line; do
-
-            OUT_FILE=${line[0]}_pop_${population}_cvg_${cvgX[i]}.bam
-            start_logging "samtools view - ${OUT_FILE}"
-
-            samtools view -s ${cvgP[i]} -@ 19 \
-                -o ${POP_CVG_OUTPUT_DIR}/${OUT_FILE} \
-                ${INPUT_DIR}/${line[0]}_genome_sorted.bam
-
-            stop_logging
-
-        done <${OUTPUT_DIR}/sample_id_list_pop_${population}.txt
-    done
+    done <${SAMPLE_ID_LIST}
 done
 
 # -----------------------------------------------------------------------------

@@ -21,6 +21,7 @@
 #  with .asc_queue_gatk_hc file before running haplotype calling. The .asc_queue
 #  file sets the default parameters used by run_script.
 #
+#  TODO: Modify script to create scripts to run for each coverage level
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
