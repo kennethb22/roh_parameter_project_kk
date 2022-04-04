@@ -24,11 +24,14 @@ SCRIPT=05b-2_create_subsamples
 # Load variables and functions from settings file
 # -----------------------------------------------------------------------------
 
-source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
+source /scratch/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
 
 # -----------------------------------------------------------------------------
 # For each population size, create a text file with a list of individual
 # sample names.
+#
+# 2022-03-31 - Moved creating the subsample populations to
+#              01b_create_subsample_lists
 # -----------------------------------------------------------------------------
 
 # for population in ${popN[@]}; do

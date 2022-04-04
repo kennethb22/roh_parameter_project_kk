@@ -15,10 +15,6 @@
 #  Submit this script to the queue with a command like this
 #    run_script my_script.sh
 #
-#  My preferred setup before running:
-#    -- script to be run in /home/scripts
-#    -- project directory (of same name as script) in /home/
-#    -- /input/ and /output/ subdirs within project dir
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
@@ -33,18 +29,6 @@ SCRIPT=$(echo "$(echo "$0" | sed -e "s/^\.\///")" | sed -e "s/\.sh//")
 # -----------------------------------------------------------------------------
 
 source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
-
-## Create arrays of downsample levels to be used.
-## Coverage level in NNx for display in output file names
-declare -a cvgX=(50x 30x 15x 10x 05x)
-
-## Coverage level fraction to supply to samtools
-declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
-
-## Get length of the coverage level arrays. Subtract 1 because arrays are zero
-## based, and we'll iterate over the arrays from 0 to cvgCnt
-cvgCnt=${#cvgX[@]}
-let cvgCnt-=1
 
 # -----------------------------------------------------------------------------
 # Load modules

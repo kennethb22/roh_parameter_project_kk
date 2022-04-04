@@ -6,7 +6,7 @@
 # ROH calling workflow. It should be included in all scripts for each step of
 # the workflow. Put the following line in the scripts:
 #
-#     source /home/aubkbk001/roh_param_project/init_script_vars.sh
+#     source /scratch/aubkbk001/roh_param_project/init_script_vars.sh
 #
 # replacing aubkbk001 with your username.
 
@@ -16,8 +16,9 @@ USER=aubkbk001
 ## Set project name
 PROJECT=roh_param_project
 
-## Set user home directory
-USER_HOME_DIR=/home/${USER}/
+## Set base directories
+USER_HOME_DIR=/home/${USER}
+BASE_DIR=/scratch/${USER}
 
 ## Set email address
 EMAIL=kirkseykb1@appstate.edu
@@ -29,23 +30,24 @@ INIT_STEP=01_slim
 # Create working directories
 # -----------------------------------------------------------------------------
 
-## Create variable pointing to user's home directory for this project and step
+## Create variable pointing to the base directory for this project and step
 
-HOME_STEP_DIR=/home/${USER}/${PROJECT}/data/${STEP}/
+HOME_STEP_DIR=${USER_HOME_DIR}/${PROJECT}/data/${STEP}/
+BASE_STEP_DIR=${BASE_DIR}/${PROJECT}/data/${STEP}/
 
 ## Set the input directory, which is the output directory from the previous
 ## step
-INPUT_DIR=/scratch/${USER}/${PROJECT}/data/${PREV_STEP}/output
+INPUT_DIR=${BASE_DIR}/${PROJECT}/data/${PREV_STEP}/output
 
 ## Create a working directory on /scratch
-WORK_DIR=/scratch/${USER}/${PROJECT}/data/${STEP}
+WORK_DIR=${BASE_DIR}/${PROJECT}/data/${STEP}
 mkdir -p ${WORK_DIR}
-chmod -R 700 /scratch/${USER}
+chmod -R 700 ${WORK_DIR}
 
 ## Create output directory in working directory
 OUTPUT_DIR=${WORK_DIR}/output
 mkdir ${OUTPUT_DIR}
-chmod -R 700 ${WORK_DIR}
+chmod -R 700 ${OUTPUT_DIR}
 
 # -----------------------------------------------------------------------------
 ## Set Slim parameters and directories
@@ -65,7 +67,7 @@ SLIM_OUT_DIR=slim_${FILE_LABELS}
 
 SLIM_PARAM_FILE=/home/${USER}/${PROJECT}/scripts/${STEP}/chrom_w_struct_and_evo.slim
 
-INIT_OUTPUT_DIR=/scratch/${USER}/${PROJECT}/data/${INIT_STEP}/output
+INIT_OUTPUT_DIR=${BASE_DIR}/${PROJECT}/data/${INIT_STEP}/output
 
 REF_GENOME_FILE_PATH=${INIT_OUTPUT_DIR}/${SLIM_OUT_DIR}
 
@@ -73,9 +75,14 @@ REF_GENOME_FILE_NAME=ancestral
 
 REF_GENOME_FILE=${REF_GENOME_FILE_PATH}/${REF_GENOME_FILE_NAME}.fasta
 
-SAMPLE_ID_LIST=${INIT_OUTPUT_DIR}/sample_id_list_${FILE_LABELS}.txt
+# BASE_SAMPLE_ID_LIST contails a list of all the samples we generated in SLiM.
+# We won't necessarily use all of those elements.
 
-FASTA_OUT_DIR=${INIT_OUTPUT_DIR}/sample_fasta_files_${FILE_LABELS}
+# SAMPLE_ID_LIST=${INIT_OUTPUT_DIR}/sample_id_list_${FILE_LABELS}.txt
+BASE_SAMPLE_ID_LIST=${INIT_OUTPUT_DIR}/sample_id_list.txt
+
+# FASTA_OUT_DIR=${INIT_OUTPUT_DIR}/sample_fasta_files_${FILE_LABELS}
+FASTA_OUT_DIR=${INIT_OUTPUT_DIR}/slim_output_fasta_files
 mkdir ${FASTA_OUT_DIR}
 
 # -----------------------------------------------------------------------------
@@ -91,14 +98,10 @@ mkdir ${FASTA_OUT_DIR}
 
 ## Create arrays of downsample levels to be used.
 ## Coverage level in NNx for display in output file names
-# declare -a cvgX=(50x 30x 15x 10x 05x)
-# declare -a cvgX=(50x 30x)
-declare -a cvgX=(10x 05x)
+declare -a cvgX=(50x 30x 15x 10x 05x)
 
 ## Coverage level fraction to supply to samtools
-# declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
-# declare -a cvgP=(1.0 0.6)
-declare -a cvgP=(0.2 0.1)
+declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
 
 ## Get length of the coverage level arrays. Subtract 1 because arrays are zero
 ## based, and we'll iterate over the arrays from 0 to cvgCnt
@@ -106,9 +109,14 @@ cvgCnt=${#cvgX[@]}
 let cvgCnt-=1
 
 ## Create array of population sizes we want to test
-# declare -a popN=(100 50 30)
-declare -a popN=(3 2)
-# declare -a popN=(01)
+declare -a popN=(100 50 30)
+
+# SAMPLE_ID_LIST, set below, contains the list of the elemtents of the largest
+# subsample we extract from the base list. e.g. if we create subsamples of 100,
+# 50, and 30 individuals, SAMPLE_ID_LIST will point to the list of 100
+# individuals.
+
+SAMPLE_ID_LIST=${INIT_OUTPUT_DIR}/sample_id_list_pop_${popN[0]}.txt
 
 # -----------------------------------------------------------------------------
 # PLINK parameters - define arrays for each of the PLINK parameters we want to
@@ -148,7 +156,8 @@ printf "%-80s   %8s   %8s   %8s\n" "Action - Output" "Start" "End" "Duration" >$
 
 create_log_file() {
     TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
-    LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_$1_${TIMESTAMP}_log.txt
+    # LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_$1_${TIMESTAMP}_log.txt
+    LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_${TIMESTAMP}_log.txt
 
     # # If log file exists, save a copy.
 

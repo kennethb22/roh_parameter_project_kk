@@ -32,13 +32,13 @@ SCRIPT=02a_run_art.sh
 # Load variables and functions from settings file
 # -----------------------------------------------------------------------------
 
-source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
+source /scratch/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
 
 # -----------------------------------------------------------------------------
 # Load modules
 # -----------------------------------------------------------------------------
 
-module load anaconda/3-2020.11
+# module load anaconda/3-2020.11
 
 # -----------------------------------------------------------------------------
 # Run read simulation
@@ -58,16 +58,18 @@ while read -a line; do
 
         start_logging "ART Read - ${line[0]}_$a.fasta"
 
-        art_illumina \
-            --seqSys HS25 \
-            -i ${FASTA_OUT_DIR}/${line[0]}_$a.fasta \
-            --paired \
-            -na \
-            --len 150 \
-            --fcov 25 \
-            -m 500 \
-            -s 75 \
-            -o ${OUTPUT_DIR}/${line[0]}_$a
+        # art_illumina \
+        #     --seqSys HS25 \
+        #     -i ${FASTA_OUT_DIR}/${line[0]}_$a.fas \
+        echo ${FASTA_OUT_DIR}/${line[0]}_$a.fas
+        #     --paired \
+        #     -na \
+        #     --len 150 \
+        #     --fcov 25 \
+        #     -m 500 \
+        #     -s 75 \
+        #     -o ${OUTPUT_DIR}/${line[0]}_$a
+        echo ${OUTPUT_DIR}/${line[0]}_$a
 
         stop_logging
 
@@ -81,4 +83,4 @@ done <${SAMPLE_ID_LIST}
 # Copy output files to user's home directory.
 # -----------------------------------------------------------------------------
 
-source /home/aubkbk001/roh_param_project/scripts/99_includes/backup_output.sh
+# source /home/aubkbk001/roh_param_project/scripts/99_includes/backup_output.sh
