@@ -1,24 +1,12 @@
 #!/bin/bash
 #
-#   +-----------------------+
-#   |  USE:                 |
-#   |    - small queue      |
-#   |    - 1 CPU + 1 Gb     |
-#   +-----------------------+
-#
-#  Replace the USER name in this script with your username and
-#  call your project whatever you want
-#
-#  This script must be made executable like this
-#    chmod +x my_script
-#
-#  Submit this script to the queue with a command like this
-#    run_script my_script.sh
-#
-#  My preferred setup before running:
-#    -- script to be run in /home/projectdir/scripts
-#    -- project directory (of same name as script) in /home/
-#    -- /input/ and /output/ subdirs within project dir
+#SBATCH --job-name=02b_concat_fastq
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -t 01:00:00
+#SBATCH --mem=4000
+#SBATCH --mail-type=begin,end,fail
+#SBATCH --mail-user=kbk0024@auburn.edu
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
@@ -32,7 +20,7 @@ SCRIPT=02b_concat_fastq.sh
 # Load variables and functions from settings file
 # -----------------------------------------------------------------------------
 
-source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
+source /scratch/kbk0024/roh_param_project/scripts/99_includes/init_script_vars.sh
 
 # -----------------------------------------------------------------------------
 # Concatenate forward and reverse read files to a single file for each
@@ -61,4 +49,4 @@ done <${SAMPLE_ID_LIST}
 # Copy output files to user's home directory.
 # -----------------------------------------------------------------------------
 
-source /home/aubkbk001/roh_param_project/scripts/99_includes/backup_output.sh
+# source /home/aubkbk001/roh_param_project/scripts/99_includes/backup_output.sh
