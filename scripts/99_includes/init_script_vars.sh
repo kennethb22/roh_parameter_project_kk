@@ -11,7 +11,7 @@
 # replacing aubkbk001 with your username.
 
 ##  Set username
-USER=aubkbk001
+USER=kbk0024
 
 ## Set project name
 PROJECT=roh_param_project
@@ -108,7 +108,10 @@ declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
 cvgCnt=${#cvgX[@]}
 let cvgCnt-=1
 
-## Create array of population sizes we want to test
+## Create array of population sizes we want to test. Populations MUST be listed
+## in order of decreasing size. 01b_create_subsample_lists.sh depends on the
+## populations being in descending order.
+
 declare -a popN=(100 50 30)
 
 # SAMPLE_ID_LIST, set below, contains the list of the elemtents of the largest
