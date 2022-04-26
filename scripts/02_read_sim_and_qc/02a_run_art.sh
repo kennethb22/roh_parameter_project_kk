@@ -1,44 +1,36 @@
 #!/bin/bash
-#
-#   +-----------------------+
-#   |  USE:                 |
-#   |    - Medium queue     |
-#   |    - 2 CPU + 4 Gb     |
-#   +-----------------------+
-#
-#  Replace the USER name in this script with your username and
-#  call your project whatever you want
-#
+
+#SBATCH --job-name=02_read_sim_and_qc
+#SBATCH -N 1
+#SBATCH -n 2
+#SBATCH -t 07:00:00
+#SBATCH --mem=4000
+#SBATCH --mail-type=begin,end,fail
+#SBATCH --mail-user=kbk0024@auburn.edu
+
 #  This script must be made executable like this
 #    chmod +x my_script
 #
-#  Submit this script to the queue with a command like this
-#    run_script my_script.sh
-#
-#  My preferred setup before running:
-#    -- script to be run in /home/projectdir/scripts
-#    -- project directory (of same name as script) in /home/
-#    -- /input/ and /output/ subdirs within project dir
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
 # -----------------------------------------------------------------------------
 
 STEP=02_read_sim_and_qc
-PREV_STEP=01_run_slim
+PREV_STEP=01b_create_subsample_lists
 SCRIPT=02a_run_art.sh
 
 # -----------------------------------------------------------------------------
 # Load variables and functions from settings file
 # -----------------------------------------------------------------------------
 
-source /scratch/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
+source /scratch/kbk0024/roh_param_project/scripts/99_includes/init_script_vars.sh
 
 # -----------------------------------------------------------------------------
 # Load modules
 # -----------------------------------------------------------------------------
 
-# module load anaconda/3-2020.11
+module load artmountrainier/2016.06.05
 
 # -----------------------------------------------------------------------------
 # Run read simulation
@@ -58,18 +50,19 @@ while read -a line; do
 
         start_logging "ART Read - ${line[0]}_$a.fasta"
 
-        # art_illumina \
-        #     --seqSys HS25 \
-        #     -i ${FASTA_OUT_DIR}/${line[0]}_$a.fas \
-        echo ${FASTA_OUT_DIR}/${line[0]}_$a.fas
-        #     --paired \
-        #     -na \
-        #     --len 150 \
-        #     --fcov 25 \
-        #     -m 500 \
-        #     -s 75 \
-        #     -o ${OUTPUT_DIR}/${line[0]}_$a
-        echo ${OUTPUT_DIR}/${line[0]}_$a
+        art_illumina \
+            --seqSys HS25 \
+            -i ${FASTA_OUT_DIR}/${line[0]}_$a.fas \
+            --paired \
+            -na \
+            --len 150 \
+            --fcov 25 \
+            -m 500 \
+            -s 75 \
+            -o ${OUTPUT_DIR}/${line[0]}_$a
+
+        # echo ${FASTA_OUT_DIR}/${line[0]}_$a.fas
+        # echo ${OUTPUT_DIR}/${line[0]}_$a
 
         stop_logging
 
