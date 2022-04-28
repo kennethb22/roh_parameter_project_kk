@@ -9,6 +9,10 @@
 #     source /scratch/aubkbk001/roh_param_project/init_script_vars.sh
 #
 # replacing aubkbk001 with your username.
+#
+# 2022-04-28 - Modify log file creation code - see if this script is being
+#              run as an array job. If so, add the job id and task id to the
+#              log file name
 
 ##  Set username
 USER=kbk0024
@@ -143,7 +147,16 @@ declare -a phzk=(10)        # Values for -homozyg-kb
 # Set name of log file to track execution times
 
 TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
-LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_${TIMESTAMP}_log.txt
+echo job:${SLURM_ARRAY_JOB_ID}
+echo task:${SLURM_ARRAY_TASK_ID}
+
+# If the job is being run as a slurm array job, add job and task ids to the
+# file name.
+if [ -n "$SLURM_ARRAY_TASK_ID" ]; then
+    LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_${TIMESTAMP}_${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}_log.txt
+else
+    LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_${TIMESTAMP}_log.txt
+fi
 
 # # If log file exists, save a copy.
 
@@ -156,25 +169,6 @@ LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_${TIMESTAMP}_log.txt
 
 printf "%-80s   %8s   %8s   %8s\n" "Action - Output" "Start" "End" "Duration" >${LOG_FILE}
 
-# Set name of log file to track execution times
-
-create_log_file() {
-    TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
-    # LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_$1_${TIMESTAMP}_log.txt
-    LOG_FILE=${OUTPUT_DIR}/${SCRIPT}_${TIMESTAMP}_log.txt
-
-    # # If log file exists, save a copy.
-
-    # if [ -f "$LOG_FILE" ]; then
-    #     TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
-    #     mv ${LOG_FILE} ${OUTPUT_DIR}/${SCRIPT}_log_${TIMESTAMP}.txt
-    # fi
-
-    # Write header to log file
-
-    printf "%-80s   %8s   %8s   %8s\n" "Action - Output" "Start" "End" "Duration" >${LOG_FILE}
-
-}
 # -----------------------------------------------------------------------------
 # Define Functions
 # -----------------------------------------------------------------------------
