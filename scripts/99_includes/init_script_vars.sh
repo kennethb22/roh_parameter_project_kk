@@ -119,6 +119,9 @@ let cvgCnt-=1
 
 declare -a popN=(100 50 30)
 
+popCnt=${#popN[@]}
+let popCnt-=1
+
 # SAMPLE_ID_LIST, set below, contains the list of the elemtents of the largest
 # subsample we extract from the base list. e.g. if we create subsamples of 100,
 # 50, and 30 individuals, SAMPLE_ID_LIST will point to the list of 100

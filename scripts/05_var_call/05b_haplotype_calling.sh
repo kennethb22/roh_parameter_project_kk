@@ -1,31 +1,29 @@
 #!/bin/bash
-#
-#  +---------+
-#  | BATCHED |
-#  +---------+
-#
+
+#SBATCH --job-name=05a_run_downsample
+#SBATCH -N 1
+#SBATCH -n 4
+#SBATCH -t 12:00:00
+#SBATCH --mem=4000
+#SBATCH --mail-type=begin,end,fail
+#SBATCH --mail-user=kbk0024@auburn.edu
+#SBATCH --array=0-4
+
 #  +----------------------+
 #  | REQUEST 4 CPU + 60gb |
 #  +----------------------+
-#
-#  Replace the USER name in this script with your username and
-#  call your project whatever you want
-#
-#  This script must be made executable like this
-#    chmod +x my_script
-#
-#  Submit this script to the queue with a command like this
-#    run_script_scratch my_script.sh
-#
-#  In user home directory, make a backup of the .asc_queue file and replace it
-#  with .asc_queue_gatk_hc file before running haplotype calling. The .asc_queue
-#  file sets the default parameters used by run_script.
-#
-#  This script submits one queue job for each each file on which gatk Haplotype
-#  Caller is run, and in order for it to work it depends on the values in
-#  .asc_queue being set to the values saved in .asc_queue_gatk_hc. Restore the
-#  original .asc_queue file after running this script.
 
+#  Before running this script, make sure that dictionary and index files exist
+#  for the reference genome file. To create dictionary file:
+#
+#     gatk-launch CreateSequenceDictionary -R ref.fasta
+#
+#  to create index file:
+#
+#     samtools faidx ref.fasta
+#
+#
+#  NOTES for running on Alabama Supercomputer:
 #
 #  NOTE: After all of the scripts finish running, check the output directories -
 #        sample_cvg_XX and make sure they have the expected number of files.
@@ -34,6 +32,7 @@
 #        samples in SAMPLE_ID_LIST to determine which samples are missing. Then
 #        re-run the matching 05d_gtyp_pXX_c_YYx.sh script in 05_var_call
 #        scripts directory.
+
 #
 
 # -----------------------------------------------------------------------------
@@ -42,80 +41,52 @@
 
 STEP=05_var_call
 PREV_STEP=04_downsample
-SCRIPT=$(echo "$(echo "$0" | sed -e "s/^\.\///")" | sed -e "s/\.sh//")
+SCRIPT=05b_haplotype_calling.sh
 
 # -----------------------------------------------------------------------------
 # Load variables and functions from settings file
 # -----------------------------------------------------------------------------
 
-source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
+source /scratch/kbk0024/roh_param_project/scripts/99_includes/init_script_vars.sh
 
 # -----------------------------------------------------------------------------
 # Load modules
 # -----------------------------------------------------------------------------
-module load gatk/4.1.4.0
+module load gatk/4.1.9.0
 
 # -----------------------------------------------------------------------------
 # Run Haplotype caller on all sample files
 # -----------------------------------------------------------------------------
 
-# Iterate over levels of coverage ------------------------------------------
-declare -a cvgX=(30x)
-cvgCnt=${#cvgX[@]}
-let cvgCnt-=1
+# Create output directory for each coverage level.
 
-for i in $(seq 0 $cvgCnt); do
+CVG_OUTPUT_DIR=${OUTPUT_DIR}/sample_cvg_${cvgX[$SLURM_ARRAY_TASK_ID]}
+mkdir ${CVG_OUTPUT_DIR}
 
-    # Create output directory for each coverage level.
+# Process each individual sample file ----------------------------------
 
-    CVG_OUTPUT_DIR=${OUTPUT_DIR}/sample_cvg_${cvgX[i]}
-    mkdir ${CVG_OUTPUT_DIR}
+while read -a line; do
 
-    # Process each individual sample file ----------------------------------
+    # ------------------------------------------------------------------
+    # Run HaplotypeCaller in GVCF mode
+    # ------------------------------------------------------------------
 
-    while read -a line; do
+    OUT_FILE=${line[0]}_cvg_${cvgX[$SLURM_ARRAY_TASK_ID]}.g.vcf
+    RGROUPS_FILE=${line[0]}_cvg_${cvgX[$SLURM_ARRAY_TASK_ID]}_rgroups.bam
+    start_logging "gatk Haplotype Caller - ${OUT_FILE}"
 
-        # ------------------------------------------------------------------
-        # Run HaplotypeCaller in GVCF mode
-        # ------------------------------------------------------------------
+    # Run gatk HaplotypeCaller
 
-        OUT_FILE=${line[0]}_cvg_${cvgX[i]}.g.vcf
-        RGROUPS_FILE=${line[0]}_cvg_${cvgX[i]}_rgroups.bam
-        sque
-        start_logging "gatk Haplotype Caller - ${OUT_FILE}"
+    gatk HaplotypeCaller \
+        -R ${REF_GENOME_FILE} \
+        -I ${CVG_OUTPUT_DIR}/${RGROUPS_FILE} \
+        -stand-call-conf 20.0 \
+        --emit-ref-confidence GVCF \
+        -O ${CVG_OUTPUT_DIR}/${OUT_FILE}
 
-        # Run gatk HaplotypeCaller
+    stop_logging
 
-        # gatk HaplotypeCaller \
-        #     -R ${REF_GENOME_FILE} \
-        #     -I ${CVG_OUTPUT_DIR}/${RGROUPS_FILE} \
-        #     -stand-call-conf 20.0 \
-        #     --emit-ref-confidence GVCF \
-        #     -O ${CVG_OUTPUT_DIR}/${OUT_FILE}
-
-        SCRIPT_FILE=hc_${line[0]}_cvg_${cvgX[i]}.sh
-
-        echo '#!/bin/bash' >${SCRIPT_FILE}
-        echo 'module load gatk/4.1.4.0' >>${SCRIPT_FILE}
-        echo 'gatk HaplotypeCaller \' >>${SCRIPT_FILE}
-        printf "%s %s \\" "-R" ${REF_GENOME_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-        printf "%s %s/%s \\" "-I" ${CVG_OUTPUT_DIR}/${RGROUPS_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-        echo '-stand-call-conf 20.0 \' >>${SCRIPT_FILE}
-        echo '--emit-ref-confidence GVCF \' >>${SCRIPT_FILE}
-        printf "%s %s/%s \\" "-O" ${CVG_OUTPUT_DIR}/${OUT_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-
-        chmod +x ${SCRIPT_FILE}
-
-        run_script ${SCRIPT_FILE}
-
-        sleep 10
-        stop_logging
-
-    done <${SAMPLE_ID_LIST}
-done
+done <${SAMPLE_ID_LIST}
 
 # -----------------------------------------------------------------------------
 # Copy output files to user's home directory.

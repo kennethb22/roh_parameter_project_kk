@@ -24,6 +24,19 @@
 # 2022-04-28 - Modify script to run as an sbatch job array on Easley.
 #            - Update calls to picard to use new command line syntax.
 #
+#
+# Run stats
+#
+# 181588_0|kbk0024|kbk0024|COMPLETED|easley|4|20000M|02:59:37|02:49:01||0:0|1|
+# 181588_0.batch|||COMPLETED|easley|4||02:59:37|02:49:01|1807412K|0:0|1|1
+# 181588_1|kbk0024|kbk0024|COMPLETED|easley|4|20000M|01:57:13|01:46:27||0:0|1|
+# 181588_1.batch|||COMPLETED|easley|4||01:57:13|01:46:27|1798648K|0:0|1|1
+# 181588_2|kbk0024|kbk0024|COMPLETED|easley|4|20000M|01:05:48|00:55:07||0:0|1|
+# 181588_2.batch|||COMPLETED|easley|4||01:05:48|00:55:07|1395824K|0:0|1|1
+# 181588_3|kbk0024|kbk0024|COMPLETED|easley|4|20000M|49:28.460|00:38:40||0:0|1|
+# 181588_3.batch|||COMPLETED|easley|4||49:28.460|00:38:40|884872K|0:0|1|1
+# 181588_4|kbk0024|kbk0024|COMPLETED|easley|4|20000M|32:55.532|00:22:31||0:0|1|
+# 181588_4.batch|||COMPLETED|easley|4||32:55.532|00:22:31|760520K|0:0|1|1
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
@@ -43,10 +56,8 @@ source /scratch/kbk0024/roh_param_project/scripts/99_includes/init_script_vars.s
 # -----------------------------------------------------------------------------
 # Load modules
 # -----------------------------------------------------------------------------
-# sleep 5
 
 module load picard/2.23.9
-# module load gatk/4.1.4.0
 
 # -----------------------------------------------------------------------------
 # Run Haplotype caller on all sample files
@@ -56,12 +67,10 @@ module load picard/2.23.9
 
 CVG_OUTPUT_DIR=${OUTPUT_DIR}/sample_cvg_${cvgX[$SLURM_ARRAY_TASK_ID]}
 mkdir ${CVG_OUTPUT_DIR}
-echo CVG_OUTPUT_DIR: ${CVG_OUTPUT_DIR}
 
 # Set input directory for this coverage
 
 CVG_INPUT_DIR=${INPUT_DIR}/sample_cvg_${cvgX[$SLURM_ARRAY_TASK_ID]}
-echo CVG_INPUT_DIR: ${CVG_INPUT_DIR}
 
 # Process each individual sample file ----------------------------------
 

@@ -1,33 +1,61 @@
 #!/bin/bash
+
+#SBATCH --job-name=05d_combine_and_genotype_gvcfs.sh
+#SBATCH -N 1
+#SBATCH -n 2
+#SBATCH -t 07:00:00
+#SBATCH --mem=4000
+#SBATCH --mail-type=begin,end,fail
+#SBATCH --mail-user=kbk0024@auburn.edu
+#SBATCH --array=0-14
+
+# -----------------------------------------------------------------------------
+# Above array needs to contain count of elements equal to number of populations
+# we're testing x number of coverage levels we're testing. e.g. If we're testing
+# 3 populations and 5 coverage levels, the array should have 15 elements, 0-14.
 #
-#  +----------------------+
-#  | large queue:  REQUEST 2 CPU + 60 gb |
-#  +----------------------+
+# This script runs one insance for each combination of population and coverage
+# level we want to analyze. For example, if we have 2 population sizes, 100 &
+# 50, and three coverage levels, 50x, 30x, 15x, then this script will run
+# 6 instances:
 #
-#  Replace the USER name in this script with your username and
-#  call your project whatever you want
+#   pop100_cvg50x
+#   pop100_cvg30x
+#   pop100_cvg15x
+#   pop50_cvg50x
+#   pop50_cvg30x
+#   pop50_cvg15x
 #
-#  This script must be made executable like this
-#    chmod +x my_script
+# We set the #SBATCH --array=0-5.
 #
-#  Submit this script to the queue with a command like this
-#    run_script_scratch my_script.sh
+# The script needs to know which population and coverage to use in the given
+# instance. We look those up in the arrays defined in init_script_vars.sh:
 #
-#  I ran each combination of population and coverage as separate jobs.
+#     cvgX=(50x 30x 15x)
+#     popN=(100 50)
 #
-#  To do - modify script to create scripts to run for each population/coverage
-#  combination
+# and we define cvgCnt = the number of element in the cvgX array, in this case
+# 3.
 #
-#  NOTES:
+# We map from the array index for this instance - obtained from
+# $SLURM_ARRAY_TASK_ID - to the population and coverage level to use for this
+# instance like so:
 #
-#  2021-11-14 - 05d_genotype_and_filter_p100_10x completed but did't
-#    produce filtered.vcf output file. Checked job output log, execution just
-#    stopped during the CombineVCFS step. I think that happened because I had
-#    exceeded my disk quota. Scripts were making a new backup of the output
-#    directory from scratch for every copy of 05d being run. Filled up quota
-#    quickly. Disabling backup code in the script. Will manually backup of
-#    output directory from scratch to home after all 05d scripts finish.
+#   array    pop index =         cvg index =
+#            array/cvgCnt        array%cvgCnt
+#   -----    -------------       ------------
+#       0          0                  0
+#       1          0                  1
+#       2          0                  2
+#       3          1                  0
+#       4          1                  1
+#       5          1                  2
 #
+# example: for array = $SLURM_ARRAY_TASK_ID = 3,
+#    the population is popN[1] = 50 and
+#    the coverage is cvgX[0] = 50x
+#
+# -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
@@ -35,98 +63,71 @@
 
 STEP=05_var_call
 PREV_STEP=04_downsample
-SCRIPT=$(echo "$(echo "$0" | sed -e "s/^\.\///")" | sed -e "s/\.sh//")
+SCRIPT=05d_combine_and_genotype_gvcfs
 
 # -----------------------------------------------------------------------------
 # Load variables and functions from settings file
 # -----------------------------------------------------------------------------
 
-source /home/aubkbk001/roh_param_project/scripts/99_includes/init_script_vars.sh
+source /scratch/kbk0024/roh_param_project/scripts/99_includes/init_script_vars.sh
 
 # -----------------------------------------------------------------------------
 # Load Modules
 # -----------------------------------------------------------------------------
 
-module load gatk/4.1.4.0
+module load gatk/4.1.9.0
 
 # -----------------------------------------------------------------------------
 # Genotype GVCFs across all samples simultaneously
 # -----------------------------------------------------------------------------
 
-## Create arrays of downsample levels to be used.
-## Coverage level in NNx for display in output file names
-# declare -a cvgX=(50x 30x 15x 10x 05x)
-declare -a cvgX=(05x)
-## Coverage level fraction to supply to samtools
-declare -a cvgP=(1.0 0.6 0.3 0.2 0.1)
+# Calculate population array and coverage level array indicies for this instance
+# of the array job.
 
-## Get length of the coverage level arrays. Subtract 1 because arrays are zero
-## based, and we'll iterate over the arrays from 0 to cvgCnt
 cvgCnt=${#cvgX[@]}
-let cvgCnt-=1
 
-## Create array of population sizes we want to test
-# declare -a popN=(100 50 30)
-declare -a popN=(100 50 30)
+# Set population for this instance of array job
+i=$(($SLURM_ARRAY_TASK_ID / $cvgCnt))
+population=${popN[i]}
 
-# Iterate over each combination of population and coverage level. Sets of
-# population and coverage are set in init_script_vars.sh
+# Set coverage for this instance of array job
+i=$(($SLURM_ARRAY_TASK_ID % $cvgCnt))
+coverage=${cvgX[i]}
 
-# Iterate over populations -----------------------------------------------------
+# Set Map file for this sample set
+MAP_FILE=${OUTPUT_DIR}/sample_pop_${population}_cvg_${coverage}_map.list
 
-for population in ${popN[@]}; do
+# ----------------------------------------------------------------------
+# gatk Gombine GVCFS
+# ----------------------------------------------------------------------
 
-    # Iterate over levels of coverage ------------------------------------------
+# Set Map file for this sample set
+MAP_FILE=${OUTPUT_DIR}/sample_pop_${population}_cvg_${coverage}_map.list
 
-    for i in $(seq 0 $cvgCnt); do
+OUT_FILE=sample_pop_${population}_cvg_${coverage}_combined_gvcfs.vcf
+COMBINED_GVCFS_FILE=${OUT_FILE}
 
-        # Set Map file for this sample set
-        MAP_FILE=${OUTPUT_DIR}/sample_pop_${population}_cvg_${cvgX[i]}_map.list
+start_logging "gatk CombineGVCFs - ${OUT_FILE}"
 
-        # ----------------------------------------------------------------------
-        # gatk Gombine GVCFS
-        # ----------------------------------------------------------------------
+gatk CombineGVCFs \
+    -R ${REF_GENOME_FILE} \
+    -V ${MAP_FILE} \
+    -O ${OUTPUT_DIR}/${OUT_FILE}
 
-        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_combined_gvcfs.vcf
-        COMBINED_GVCFS_FILE=${OUT_FILE}
-        SCRIPT_FILE=05d_gtyp_p${population}_c_${cvgX[i]}.sh
+stop_logging
 
-        echo '#!/bin/bash' >${SCRIPT_FILE}
-        echo 'module load gatk/4.1.4.0' >>${SCRIPT_FILE}
-        printf "\n\n" >>${SCRIPT_FILE}
-        echo 'gatk CombineGVCFs \' >>${SCRIPT_FILE}
-        printf "%s %s \\" "-R" ${REF_GENOME_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-        printf "%s %s \\" "-V" ${MAP_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-        printf "%s %s/%s" "-O" ${OUTPUT_DIR} ${OUT_FILE} >>${SCRIPT_FILE}
-        printf "\n\n" >>${SCRIPT_FILE}
+# ----------------------------------------------------------------------
+# gatk GenotypeGVCFs
+# ----------------------------------------------------------------------
 
-        # ----------------------------------------------------------------------
-        # gatk GenotypeGVCFs
-        # ----------------------------------------------------------------------
+OUT_FILE=sample_pop_${population}_cvg_${coverage}_genotyped_gvcfs.vcf
+GENOTYPED_FILE=${OUT_FILE}
 
-        OUT_FILE=sample_pop_${population}_cvg_${cvgX[i]}_genotyped_gvcfs.vcf
-        GENOTYPED_FILE=${OUT_FILE}
+start_logging "gatk GenotypeGVCFs- ${OUT_FILE}"
 
-        echo 'gatk GenotypeGVCFs \' >>${SCRIPT_FILE}
-        printf "%s %s \\" "-R" ${REF_GENOME_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-        printf "%s %s/%s \\" "-V" ${OUTPUT_DIR} ${COMBINED_GVCFS_FILE} >>${SCRIPT_FILE}
-        printf "\n" >>${SCRIPT_FILE}
-        printf "%s %s/%s" "-O" ${OUTPUT_DIR} ${OUT_FILE} >>${SCRIPT_FILE}
-        printf "\n\n" >>${SCRIPT_FILE}
+gatk GenotypeGVCFs \
+    -R ${REF_GENOME_FILE} \
+    -V ${OUTPUT_DIR}/${COMBINED_GVCFS_FILE} \
+    -O ${OUTPUT_DIR}/${OUT_FILE}
 
-        chmod +x ${SCRIPT_FILE}
-
-        run_script ${SCRIPT_FILE}
-    done
-
-done
-
-# sleep 10
-# -----------------------------------------------------------------------------
-# Copy output files to user's home directory.
-# -----------------------------------------------------------------------------
-
-# source /home/aubkbk001/roh_param_project/scripts/99_includes/backup_output.sh
+stop_logging
