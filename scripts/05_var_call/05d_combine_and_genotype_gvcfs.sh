@@ -4,7 +4,7 @@
 #SBATCH -N 1
 #SBATCH -n 2
 #SBATCH -t 07:00:00
-#SBATCH --mem=4000
+#SBATCH --mem=16000
 #SBATCH --mail-type=begin,end,fail
 #SBATCH --mail-user=kbk0024@auburn.edu
 #SBATCH --array=0-14

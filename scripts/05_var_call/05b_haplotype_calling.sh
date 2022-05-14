@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#SBATCH --job-name=05a_run_downsample
+#SBATCH --job-name=05b_haplotype_calling
 #SBATCH -N 1
 #SBATCH -n 4
 #SBATCH -t 12:00:00
-#SBATCH --mem=4000
+#SBATCH --mem=8000
 #SBATCH --mail-type=begin,end,fail
 #SBATCH --mail-user=kbk0024@auburn.edu
 #SBATCH --array=0-4
