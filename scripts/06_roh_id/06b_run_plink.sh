@@ -7,21 +7,56 @@
 #SBATCH --mem=32000
 #SBATCH --mail-type=begin,end,fail
 #SBATCH --mail-user=kbk0024@auburn.edu
-#xSBATCH --array=0-14
+#SBATCH --array=0-14
 
-#  +-----------------+
-#  | REQUIRES 20 CPU |
-#  +-----------------+
+# -----------------------------------------------------------------------------
+# Above array needs to contain count of elements equal to number of populations
+# we're testing x number of coverage levels we're testing. e.g. If we're testing
+# 3 populations and 5 coverage levels, the array should have 15 elements, 0-14.
 #
-#  Replace the USER name in this script with your username and
-#  call your project whatever you want
+# This script runs one insance for each combination of population and coverage
+# level we want to analyze.
 #
-#  This script must be made executable like this
-#    chmod +x my_script
+# The script needs to know which population and coverage to use in the given
+# instance. We look those values up in the arrays defined in
+# init_script_vars.sh:
 #
-#  Submit this script to the queue with a command like this
-#    run_script my_script.sh
+#    declare -a cvgX=(50x 30x 15x 10x 05x)
+#    declare -a popN=(100 50 30)
 #
+# We define cvgCnt = the number of elements in the cvgX array, in this case
+# 5.
+#
+# We map from the array index for this instance - obtained from
+# $SLURM_ARRAY_TASK_ID - to the population and coverage level to use for this
+# instance like so. We define the indicies to the popN and cvgX arrays as:
+#
+#    pop_index = array_index/cvgCnt
+#    cvg_index = array_index%cvgCnt
+#
+# The table below shows how these functions map from the array_index to the
+# actual population and coverage values contained in the cvgX and popN arrays.
+#
+#   array   pop     cvg     pop     cvg
+#   index   index   index   value   value
+#   -----   -----   -----   -----   -----
+#      0       0       0     100     50x
+#      1       0       1     100     30x
+#      2       0       2     100     15x
+#      3       0       3     100     10x
+#      4       0       4     100      5x
+#      5       1       0      50     50x
+#      6       1       1      50     30x
+#      7       1       2      50     15x
+#      8       1       3      50     10x
+#      9       1       4      50      5x
+#     10       2       0      30     50x
+#     11       2       1      30     30x
+#     12       2       2      30     15x
+#     13       2       3      30     10x
+#     14       2       4      30      5x
+#
+# -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
 # Set variables for this step
@@ -41,35 +76,20 @@ source /scratch/kbk0024/roh_param_project/scripts/99_includes/init_script_vars.s
 # Load modules
 # -----------------------------------------------------------------------------
 
-# module load anaconda/3-2020.11
 module load plink/1.9
-
-# -----------------------------------------------------------------------------
-# Process final filtered SNPs
-# -----------------------------------------------------------------------------
-
-# # Iterate over populations -----------------------------------------------------
-
-# for population in ${popN[@]}; do
-
-#     # Iterate over levels of coverage ------------------------------------------
-
-#     for i in $(seq 0 $cvgCnt); do
 
 # -----------------------------------------------------------------------------
 # Set variables and parameters for this instance of the array job
 # -----------------------------------------------------------------------------
 
 # Set population for this instance of array job
-# cvgCnt=${#cvgX[@]}
-# i=$(($SLURM_ARRAY_TASK_ID / $cvgCnt))
-# population=${popN[i]}
-population=30
+cvgCnt=${#cvgX[@]}
+i=$(($SLURM_ARRAY_TASK_ID / $cvgCnt))
+population=${popN[i]}
 
 # Set coverage for this instance of array job
-# i=$(($SLURM_ARRAY_TASK_ID % $cvgCnt))
-# coverage=${cvgX[i]}
-coverage=50x
+i=$(($SLURM_ARRAY_TASK_ID % $cvgCnt))
+coverage=${cvgX[i]}
 
 # ----------------------------------------------------------------------
 # Convert VCF to PLINK format(s)
@@ -87,18 +107,23 @@ plink \
 
 stop_logging
 
+# -----------------------------------------------------------------------------
+# PLINK parameters - define arrays for each of the PLINK parameters we want to
+# vary and test.
+# -----------------------------------------------------------------------------
+
+declare -a phwh=(0 1 2)         # Values for -homozyg-window-het
+declare -a phwm=(2 5 50)        # Values for -homozyg-window-missing
+declare -a phws=(50 100 1000)   # Values for -homozyg-window-snp
+declare -a phzd=(50)            # Values for -homozyg-density
+declare -a phzg=(500 1000)      # Values for -homozyg-gap
+declare -a phwt=(0.01 0.05 0.1) # Values for -homozyg-window-threshold
+declare -a phzs=(10 100 1000)   # Values for -homozyg-snp
+declare -a phzk=(100)           # Values for -homozyg-kb
+
 # ----------------------------------------------------------------------
 # Run PLINK to ID ROHs
 # ----------------------------------------------------------------------
-
-# p1=0    # Values for -homozyg-window-het
-# p2=5    # Values for -homozyg-window-missing
-# p3=50   # Values for -homozyg-window-snp
-# p4=50   # Values for -homozyg-density
-# p5=1000 # Values for -homozyg-gap
-# p6=0.01 # Values for -homozyg-window-threshold
-# p7=25   # Values for -homozyg-snp
-# p8=10   # Values for -homozyg-kb
 
 for p1 in ${phwh[@]}; do                             # -homozyg-window-het
     for p2 in ${phwm[@]}; do                         # -homozyg-winodow-missing
@@ -113,7 +138,7 @@ for p1 in ${phwh[@]}; do                             # -homozyg-window-het
                                 IN_FILE=sample_pop_${population}_cvg_${coverage}_plink
                                 OUT_FILE=sample_pop_${population}_cvg_${coverage}_plink_roh${PARAM_SUFFIX}
 
-                                start_logging "PLINK ROH ID"
+                                start_logging "PLINK ROH ID - ${PARAM_SUFFIX}"
 
                                 plink --bim ${OUTPUT_DIR}/${IN_FILE}.bim \
                                     --bed ${OUTPUT_DIR}/${IN_FILE}.bed \
@@ -137,9 +162,3 @@ for p1 in ${phwh[@]}; do                             # -homozyg-window-het
         done
     done
 done
-
-# -----------------------------------------------------------------------------
-# Copy output files to user's home directory.
-# -----------------------------------------------------------------------------
-
-# source /home/aubkbk001/roh_param_project/scripts/99_includes/backup_output.sh

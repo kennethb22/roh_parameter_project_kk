@@ -130,20 +130,6 @@ let popCnt-=1
 SAMPLE_ID_LIST=${INIT_OUTPUT_DIR}/sample_id_list_pop_${popN[0]}.txt
 
 # -----------------------------------------------------------------------------
-# PLINK parameters - define arrays for each of the PLINK parameters we want to
-# vary and test. Used in 06b_run_plink.sh
-# -----------------------------------------------------------------------------
-
-declare -a phwh=(0 1 2 3)   # Values for -homozyg-window-het
-declare -a phwm=(5 10 50)   # Values for -homozyg-window-missing
-declare -a phws=(50)        # Values for -homozyg-window-snp
-declare -a phzd=(50)        # Values for -homozyg-density
-declare -a phzg=(1000)      # Values for -homozyg-gap
-declare -a phwt=(0.01 0.05) # Values for -homozyg-window-threshold
-declare -a phzs=(25 50 100) # Values for -homozyg-snp
-declare -a phzk=(10)        # Values for -homozyg-kb
-
-# -----------------------------------------------------------------------------
 # Create log file
 # -----------------------------------------------------------------------------
 
